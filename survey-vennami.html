@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Farmer Survey Form</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif; /* Changed to Inter as per instructions */
+      background: linear-gradient(to right, #e0f7fa, #ffffff);
+      margin: 0;
+      padding: 10px;
+    }
+
+    .container {
+      max-width: 100%;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 12px; /* Rounded corners */
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+    }
+
+    h2 {
+      text-align: center;
+      color: #00796b;
+      margin-bottom: 20px;
+      font-size: 1.5rem;
+    }
+
+    fieldset {
+      border: none;
+      margin-bottom: 20px;
+    }
+
+    legend {
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: #004d40;
+      font-size: 1.1rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+      color: #333;
+      font-size: 0.95rem;
+    }
+
+    input[type="text"],
+    input[type="tel"],
+    input[type="number"],
+    input[type="date"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 8px 10px;
+      margin-bottom: 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px; /* Rounded corners */
+      font-size: 0.95rem;
+    }
+
+    .flex-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .flex-row > div {
+      flex: 1;
+      min-width: 48%; /* Ensures responsiveness */
+    }
+
+    button {
+      background-color: #00796b;
+      color: white;
+      padding: 10px 16px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 6px; /* Rounded corners */
+      cursor: pointer;
+      margin-top: 5px;
+    }
+
+    button:hover {
+      background-color: #004d40;
+    }
+
+    .subsection {
+      background-color: #ffffff;
+      border: 1px solid #e0e0e0;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 6px; /* Rounded corners */
+    }
+
+    .subsection h5 {
+      margin-top: 0;
+      color: #004d40;
+      margin-bottom: 10px;
+      font-size: 1rem;
+    }
+
+    .icon-label i {
+      margin-right: 6px;
+      color: #00796b;
+    }
+
+    .location-btn {
+      background-color: #0097a7;
+      font-size: 0.85rem;
+      margin-bottom: 10px;
+      border-radius: 6px; /* Rounded corners */
+    }
+
+    .radio-group label {
+      display: inline-block;
+      margin-right: 15px;
+      font-weight: normal;
+    }
+
+    .radio-group input[type="radio"] {
+      width: auto;
+      margin-right: 5px;
+    }
+
+    @media (max-width: 600px) {
+      input, select, textarea, button {
+        font-size: 0.9rem;
+      }
+      .flex-row > div {
+        min-width: 100%; /* Stacks elements on small screens */
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2><i class="fa-solid fa-shrimp"></i> Farmer Survey Form</h2>
+    <form id="farmerForm">
+
+      <!-- Farmer Info -->
+      <fieldset>
+        <legend>👨‍🌾 Farmer Information</legend>
+
+        <label class="icon-label"><i class="fa-solid fa-user"></i> Name of Farmer</label>
+        <input type="text" name="farmerName" required>
+
+        <label class="icon-label"><i class="fa-solid fa-phone"></i> Contact Number</label>
+        <input type="tel" name="contactNumber" required pattern="[0-9]{10}" placeholder="10-digit number">
+
+        <label class="icon-label"><i class="fa-solid fa-map-location-dot"></i> Location of Pond</label>
+        <input type="text" name="pondLocation" id="pondLocation" required readonly>
+        <button type="button" class="location-btn" onclick="fillLocation('pondLocation')"><i class="fa-solid fa-location-crosshairs"></i> Use My Location</button>
+
+        <label class="icon-label"><i class="fa-solid fa-water"></i> Area of Pond (in square meters)</label>
+        <input type="number" name="pondAreaSqMeters" id="pondAreaSqMeters" min="0" step="0.01" required oninput="calculatePremiums()">
+
+        <label class="icon-label"><i class="fa-solid fa-chart-area"></i> Area of Pond (in hectares)</label>
+        <input type="text" name="pondAreaHectares" id="pondAreaHectares" readonly>
+
+        <label class="icon-label"><i class="fa-solid fa-toilet"></i> Shrimp Toilet Available?</label>
+        <select name="shrimpToilet" required>
+          <option value="">Select</option>
+          <option value="Yes">Yes</option>
+          <option value="No">No</option>
+        </select>
+
+        <label class="icon-label"><i class="fa-solid fa-sync-alt"></i> Frequency of Culture</label>
+        <input type="text" name="cultureFrequency" required>
+
+        <label class="icon-label"><i class="fa-solid fa-utensils"></i> Feeding Frequency</label>
+        <input type="text" name="feedingFrequency" required>
+
+        <label class="icon-label"><i class="fa-solid fa-faucet-drip"></i> Source of Water</label>
+        <input type="text" name="waterSource" required>
+
+        <label class="icon-label"><i class="fa-solid fa-prescription-bottle-medical"></i> Medicine Used</label>
+        <input type="text" name="medicineUsed">
+
+        <label class="icon-label"><i class="fa-solid fa-disease"></i> Did you previously experience white spot disease?</label>
+        <div class="radio-group">
+          <label><input type="radio" name="whiteSpotDisease" value="Yes" required> Yes</label>
+          <label><input type="radio" name="whiteSpotDisease" value="No"> No</label>
+        </div>
+      </fieldset>
+
+      <!-- Financial Calculations -->
+      <fieldset>
+        <legend>💰 Financial Information</legend>
+
+        <label class="icon-label"><i class="fa-solid fa-money-bill-wave"></i> Total coverage for seed</label>
+        <input type="text" name="totalCoverageForSeed" id="totalCoverageForSeed" readonly>
+
+        <!-- 3% Premium -->
+        <label class="icon-label"><i class="fa-solid fa-percent"></i> Interested for Premium (3% of Sum Insured)</label>
+        <input type="text" name="calculatedPremium3Percent" id="calculatedPremium3Percent" readonly>
+        <label class="icon-label"><i class="fa-solid fa-handshake"></i> Agreed to 3% Premium?</label>
+        <div class="radio-group">
+          <label><input type="radio" name="agreedToPremium3Percent" value="Yes" required> Yes</label>
+          <label><input type="radio" name="agreedToPremium3Percent" value="No"> No</label>
+        </div>
+
+        <!-- 2% Premium -->
+        <label class="icon-label"><i class="fa-solid fa-percent"></i> Interested for Premium (2% of Sum Insured)</label>
+        <input type="text" name="calculatedPremium2Percent" id="calculatedPremium2Percent" readonly>
+        <label class="icon-label"><i class="fa-solid fa-handshake"></i> Agreed to 2% Premium?</label>
+        <div class="radio-group">
+          <label><input type="radio" name="agreedToPremium2Percent" value="Yes" required> Yes</label>
+          <label><input type="radio" name="agreedToPremium2Percent" value="No"> No</label>
+        </div>
+
+        <!-- 1% Premium -->
+        <label class="icon-label"><i class="fa-solid fa-percent"></i> Interested for Premium (1% of Sum Insured)</label>
+        <input type="text" name="calculatedPremium1Percent" id="calculatedPremium1Percent" readonly>
+        <label class="icon-label"><i class="fa-solid fa-handshake"></i> Agreed to 1% Premium?</label>
+        <div class="radio-group">
+          <label><input type="radio" name="agreedToPremium1Percent" value="Yes" required> Yes</label>
+          <label><input type="radio" name="agreedToPremium1Percent" value="No"> No</label>
+        </div>
+
+      </fieldset>
+
+      <button type="submit">Submit Data</button>
+    </form>
+  </div>
+
+  <script>
+    // Constants for calculations
+    const SQUARE_METERS_PER_HECTARE = 10000;
+    const STANDARD_STOCKING_DENSITY_PER_SQM = 50; // 50 pieces per square meter
+    const PRICE_PER_PIECE = 0.35; // Changed to 0.35 INR per piece as requested
+
+    const PREMIUM_PERCENTAGE_3 = 0.03; // 3%
+    const PREMIUM_PERCENTAGE_2 = 0.02; // 2%
+    const PREMIUM_PERCENTAGE_1 = 0.01; // 1%
+
+    // Function to fill location fields with GPS coordinates
+    function fillLocation(fieldId) {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+          const latitude = position.coords.latitude;
+          const longitude = position.coords.longitude;
+          document.getElementById(fieldId).value = `Lat: ${latitude}, Lon: ${longitude}`;
+        }, function(error) {
+          console.error("Geolocation error:", error);
+          const locationInput = document.getElementById(fieldId);
+          locationInput.value = "Unable to fetch location. Please enable location services.";
+        });
+      } else {
+        console.error("Geolocation is not supported by your browser.");
+        const locationInput = document.getElementById(fieldId);
+        locationInput.value = "Geolocation is not supported by your browser.";
+      }
+    }
+
+    // Function to perform all calculations and update fields
+    function calculatePremiums() {
+      const pondAreaSqMetersInput = document.getElementById("pondAreaSqMeters");
+      const pondAreaHectaresInput = document.getElementById("pondAreaHectares");
+      const totalCoverageForSeedInput = document.getElementById("totalCoverageForSeed"); 
+
+      const calculatedPremium3PercentInput = document.getElementById("calculatedPremium3Percent");
+      const calculatedPremium2PercentInput = document.getElementById("calculatedPremium2Percent");
+      const calculatedPremium1PercentInput = document.getElementById("calculatedPremium1Percent");
+
+      const pondAreaSqMeters = parseFloat(pondAreaSqMetersInput.value);
+      
+      let pondAreaHectares = 0;
+      if (!isNaN(pondAreaSqMeters) && pondAreaSqMeters >= 0) {
+        pondAreaHectares = pondAreaSqMeters / SQUARE_METERS_PER_HECTARE;
+        pondAreaHectaresInput.value = pondAreaHectares.toFixed(4); // Display with 4 decimal places
+      } else {
+        pondAreaHectaresInput.value = '';
+      }
+
+      // Calculate Total coverage for seed (which is the Sum Insured)
+      // This is based on STANDARD_STOCKING_DENSITY_PER_SQM * SQUARE_METERS_PER_HECTARE * PRICE_PER_PIECE
+      let calculatedSumInsured = 0;
+      if (!isNaN(pondAreaHectares) && pondAreaHectares >= 0) {
+        calculatedSumInsured = pondAreaHectares * STANDARD_STOCKING_DENSITY_PER_SQM * SQUARE_METERS_PER_HECTARE * PRICE_PER_PIECE;
+        totalCoverageForSeedInput.value = calculatedSumInsured.toLocaleString('en-IN', { style: 'currency', currency: 'INR' });
+      } else {
+        totalCoverageForSeedInput.value = '';
+      }
+
+      // Calculate and display 3% premium
+      let calculatedPremium3Percent = 0;
+      if (!isNaN(calculatedSumInsured) && calculatedSumInsured > 0) {
+        calculatedPremium3Percent = calculatedSumInsured * PREMIUM_PERCENTAGE_3;
+        calculatedPremium3PercentInput.value = calculatedPremium3Percent.toLocaleString('en-IN', { style: 'currency', currency: 'INR' });
+      } else {
+        calculatedPremium3PercentInput.value = '';
+      }
+
+      // Calculate and display 2% premium
+      let calculatedPremium2Percent = 0;
+      if (!isNaN(calculatedSumInsured) && calculatedSumInsured > 0) {
+        calculatedPremium2Percent = calculatedSumInsured * PREMIUM_PERCENTAGE_2;
+        calculatedPremium2PercentInput.value = calculatedPremium2Percent.toLocaleString('en-IN', { style: 'currency', currency: 'INR' });
+      } else {
+        calculatedPremium2PercentInput.value = '';
+      }
+
+      // Calculate and display 1% premium
+      let calculatedPremium1Percent = 0;
+      if (!isNaN(calculatedSumInsured) && calculatedSumInsured > 0) {
+        calculatedPremium1Percent = calculatedSumInsured * PREMIUM_PERCENTAGE_1;
+        calculatedPremium1PercentInput.value = calculatedPremium1Percent.toLocaleString('en-IN', { style: 'currency', currency: 'INR' });
+      } else {
+        calculatedPremium1PercentInput.value = '';
+      }
+    }
+
+    // Handle form submission
+    document.getElementById('farmerForm').addEventListener('submit', function(event) {
+      event.preventDefault(); // Prevent default form submission
+
+      const form = event.target;
+      const formData = new FormData(form);
+
+      // Manually add calculated read-only values to FormData
+      formData.append('pondAreaHectares', document.getElementById('pondAreaHectares').value);
+      formData.append('totalCoverageForSeed', document.getElementById('totalCoverageForSeed').value); 
+      formData.append('calculatedPremium3Percent', document.getElementById('calculatedPremium3Percent').value);
+      formData.append('calculatedPremium2Percent', document.getElementById('calculatedPremium2Percent').value);
+      formData.append('calculatedPremium1Percent', document.getElementById('calculatedPremium1Percent').value);
+
+      // Get values for the "Agreed to Premium?" radio buttons
+      const agreedToPremium3Percent = document.querySelector('input[name="agreedToPremium3Percent"]:checked');
+      if (agreedToPremium3Percent) {
+        formData.append('agreedToPremium3Percent', agreedToPremium3Percent.value);
+      }
+      const agreedToPremium2Percent = document.querySelector('input[name="agreedToPremium2Percent"]:checked');
+      if (agreedToPremium2Percent) {
+        formData.append('agreedToPremium2Percent', agreedToPremium2Percent.value);
+      }
+      const agreedToPremium1Percent = document.querySelector('input[name="agreedToPremium1Percent"]:checked');
+      if (agreedToPremium1Percent) {
+        formData.append('agreedToPremium1Percent', agreedToPremium1Percent.value);
+      }
+
+      // Add white spot disease field to formData
+      const whiteSpotDisease = document.querySelector('input[name="whiteSpotDisease"]:checked');
+      if (whiteSpotDisease) {
+        formData.append('whiteSpotDisease', whiteSpotDisease.value);
+      }
+
+
+      // You can add a loading indicator here
+      const submitButton = form.querySelector('button[type="submit"]');
+      submitButton.disabled = true;
+      submitButton.textContent = 'Submitting...';
+
+      // Replace 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE' with your actual Google Apps Script Web App URL
+      // This URL is obtained after deploying your Apps Script as a web app.
+      const appsScriptUrl = 'https://script.google.com/macros/s/AKfycbwg-tl62MC-bxfEbA6L1tgfx1O6Fmrug-lYj5Z8EjE8zlAHsLm9lqS994CjTubTt39U/exec'; // Placeholder
+
+      fetch(appsScriptUrl, {
+        method: 'POST',
+        body: formData // Send FormData directly
+      })
+      .then(response => {
+        if (response.ok) {
+          return response.text();
+        }
+        throw new Error('Network response was not ok.');
+      })
+      .then(result => {
+        console.log('Success:', result);
+        // IMPORTANT: Replace alert with a custom modal for better UX
+        alert('Survey data submitted successfully!');
+        form.reset(); // Clear the form
+        calculatePremiums(); // Re-initialize calculated fields
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        // IMPORTANT: Replace alert with a custom modal for better UX
+        alert('There was an error submitting your data. Please try again.');
+      })
+      .finally(() => {
+        submitButton.disabled = false;
+        submitButton.textContent = 'Submit Data';
+      });
+    });
+
+    // Initial calculation on page load
+    window.onload = () => {
+      calculatePremiums();
+    };
+  </script>
+</body>
+</html>
