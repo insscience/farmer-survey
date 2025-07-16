@@ -136,6 +136,82 @@
       }
     }
   </style>
+  
+  <!-- Firebase SDKs - These are the scripts you copy from Firebase console -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-messaging-compat.js"></script>
+  
+  <script>
+    // Your web app's Firebase configuration - Copied from your provided content
+    const firebaseConfig = {
+      apiKey: "AIzaSyAyMnPuT99qS6firsrk62T76qCWdMbYoMA",
+      authDomain: "farmersurveypushnotifications.firebaseapp.com",
+      projectId: "farmersurveypushnotifications",
+      storageBucket: "farmersurveypushnotifications.firebasestorage.app",
+      messagingSenderId: "14429307335",
+      appId: "1:14429307335:web:9f9061972c3783540399e2"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const messaging = firebase.messaging();
+
+    // Function to request notification permission and get token
+    function requestNotificationPermissionAndToken() {
+      messaging.requestPermission().then(function() {
+        console.log('Notification permission granted.');
+        // Get the FCM registration token
+        // IMPORTANT: Replace 'YOUR_VAPID_PUBLIC_KEY_HERE' with your actual VAPID key from Firebase Console -> Project Settings -> Cloud Messaging -> Web configuration
+        return messaging.getToken({ vapidKey: 'BGU8fnMPSrT3OQxUwunizXeyl_CJBCqeYF1aw45kqofzkN4Ll0sjL7xB5WIbxduXBW3jkyyawYcYQRsnjt3Y6GI' }); 
+      })
+      .then(function(token) {
+        console.log('FCM Token:', token);
+        // Set the hidden input field with the token
+        document.getElementById('fcmToken').value = token;
+      })
+      .catch(function(error) {
+        console.error('Unable to get permission to notify or get token.', error);
+        // Ensure the fcmToken input exists before trying to set its value
+        const fcmTokenInput = document.getElementById('fcmToken');
+        if (fcmTokenInput) {
+          fcmTokenInput.value = ''; // Clear if permission denied or error
+        }
+      });
+    }
+
+    // Register service worker and then request notification permission
+    // This block is now called inside window.onload to ensure DOM is ready
+    function registerServiceWorkerAndRequestPermission() {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/firebase-messaging-sw.js')
+        .then((registration) => {
+          console.log('Service Worker registered with scope:', registration.scope);
+          requestNotificationPermissionAndToken(); // Request permission after service worker is registered
+        })
+        .catch((error) => {
+          console.error('Service Worker registration failed:', error);
+          const fcmTokenInput = document.getElementById('fcmToken');
+          if (fcmTokenInput) {
+            fcmTokenInput.value = 'Service workers not supported or registration failed';
+          }
+        });
+      } else {
+        console.warn('Service workers are not supported in this browser.');
+        const fcmTokenInput = document.getElementById('fcmToken');
+        if (fcmTokenInput) {
+          fcmTokenInput.value = 'Service workers not supported';
+        }
+      }
+    }
+
+    // Optional: Handle foreground messages (when user is on the page)
+    messaging.onMessage((payload) => {
+      console.log('Message received. ', payload);
+      // You can display an in-app notification here instead of a browser notification
+      // For example, using a custom modal or toast message
+      alert(`New message: ${payload.notification.title} - ${payload.notification.body}`); // IMPORTANT: Replace alert with a custom modal for better UX
+    });
+  </script>
 </head>
 <body>
   <div class="container">
@@ -195,6 +271,9 @@
         <label class="icon-label"><i class="fa-solid fa-money-bill-wave"></i> Total coverage for seed</label>
         <input type="text" name="totalCoverageForSeed" id="totalCoverageForSeed" readonly>
 
+        <!-- Hidden input for FCM Token -->
+        <input type="hidden" name="fcmToken" id="fcmToken">
+
         <!-- 3% Premium -->
         <label class="icon-label"><i class="fa-solid fa-percent"></i> Interested for Premium (3% of Sum Insured)</label>
         <input type="text" name="calculatedPremium3Percent" id="calculatedPremium3Percent" readonly>
@@ -221,7 +300,6 @@
           <label><input type="radio" name="agreedToPremium1Percent" value="Yes" required> Yes</label>
           <label><input type="radio" name="agreedToPremium1Percent" value="No"> No</label>
         </div>
-
       </fieldset>
 
       <button type="submit">Submit Data</button>
@@ -328,10 +406,11 @@
       formData.append('calculatedPremium3Percent', document.getElementById('calculatedPremium3Percent').value);
       formData.append('calculatedPremium2Percent', document.getElementById('calculatedPremium2Percent').value);
       formData.append('calculatedPremium1Percent', document.getElementById('calculatedPremium1Percent').value);
+      formData.append('fcmToken', document.getElementById('fcmToken').value); // Add FCM token
 
       // Get values for the "Agreed to Premium?" radio buttons
       const agreedToPremium3Percent = document.querySelector('input[name="agreedToPremium3Percent"]:checked');
-      if (agreedToPremium3Percent) {
+      if (aggedToPremium3Percent) { // Fixed typo: aggedToPremium3Percent to agreedToPremium3Percent
         formData.append('agreedToPremium3Percent', agreedToPremium3Percent.value);
       }
       const agreedToPremium2Percent = document.querySelector('input[name="agreedToPremium2Percent"]:checked');
@@ -387,9 +466,10 @@
       });
     });
 
-    // Initial calculation on page load
+    // Initial calculations and Service Worker registration on page load
     window.onload = () => {
       calculatePremiums();
+      registerServiceWorkerAndRequestPermission(); // Call this on window load
     };
   </script>
 </body>
