@@ -63,12 +63,6 @@
       font-size: 0.95rem;
     }
 
-    .flex-row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
     .flex-row > div {
       flex: 1;
       min-width: 48%; /* Ensures responsiveness */
@@ -87,14 +81,6 @@
 
     button:hover {
       background-color: #004d40;
-    }
-
-    .subsection {
-      background-color: #ffffff;
-      border: 1px solid #e0e0e0;
-      padding: 10px;
-      margin-top: 10px;
-      border-radius: 6px; /* Rounded corners */
     }
 
     .subsection h5 {
@@ -136,82 +122,6 @@
       }
     }
   </style>
-  
-  <!-- Firebase SDKs - These are the scripts you copy from Firebase console -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-messaging-compat.js"></script>
-  
-  <script>
-    // Your web app's Firebase configuration - Copied from your provided content
-    const firebaseConfig = {
-      apiKey: "AIzaSyAyMnPuT99qS6firsrk62T76qCWdMbYoMA",
-      authDomain: "farmersurveypushnotifications.firebaseapp.com",
-      projectId: "farmersurveypushnotifications",
-      storageBucket: "farmersurveypushnotifications.firebasestorage.app",
-      messagingSenderId: "14429307335",
-      appId: "1:14429307335:web:9f9061972c3783540399e2"
-    };
-
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const messaging = firebase.messaging();
-
-    // Function to request notification permission and get token
-    function requestNotificationPermissionAndToken() {
-      messaging.requestPermission().then(function() {
-        console.log('Notification permission granted.');
-        // Get the FCM registration token
-        // IMPORTANT: Replace 'YOUR_VAPID_PUBLIC_KEY_HERE' with your actual VAPID key from Firebase Console -> Project Settings -> Cloud Messaging -> Web configuration
-        return messaging.getToken({ vapidKey: 'BGU8fnMPSrT3OQxUwunizXeyl_CJBCqeYF1aw45kqofzkN4Ll0sjL7xB5WIbxduXBW3jkyyawYcYQRsnjt3Y6GI' }); 
-      })
-      .then(function(token) {
-        console.log('FCM Token:', token);
-        // Set the hidden input field with the token
-        document.getElementById('fcmToken').value = token;
-      })
-      .catch(function(error) {
-        console.error('Unable to get permission to notify or get token.', error);
-        // Ensure the fcmToken input exists before trying to set its value
-        const fcmTokenInput = document.getElementById('fcmToken');
-        if (fcmTokenInput) {
-          fcmTokenInput.value = ''; // Clear if permission denied or error
-        }
-      });
-    }
-
-    // Register service worker and then request notification permission
-    // This block is now called inside window.onload to ensure DOM is ready
-    function registerServiceWorkerAndRequestPermission() {
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/firebase-messaging-sw.js')
-        .then((registration) => {
-          console.log('Service Worker registered with scope:', registration.scope);
-          requestNotificationPermissionAndToken(); // Request permission after service worker is registered
-        })
-        .catch((error) => {
-          console.error('Service Worker registration failed:', error);
-          const fcmTokenInput = document.getElementById('fcmToken');
-          if (fcmTokenInput) {
-            fcmTokenInput.value = 'Service workers not supported or registration failed';
-          }
-        });
-      } else {
-        console.warn('Service workers are not supported in this browser.');
-        const fcmTokenInput = document.getElementById('fcmToken');
-        if (fcmTokenInput) {
-          fcmTokenInput.value = 'Service workers not supported';
-        }
-      }
-    }
-
-    // Optional: Handle foreground messages (when user is on the page)
-    messaging.onMessage((payload) => {
-      console.log('Message received. ', payload);
-      // You can display an in-app notification here instead of a browser notification
-      // For example, using a custom modal or toast message
-      alert(`New message: ${payload.notification.title} - ${payload.notification.body}`); // IMPORTANT: Replace alert with a custom modal for better UX
-    });
-  </script>
 </head>
 <body>
   <div class="container">
@@ -279,34 +189,112 @@
         <input type="text" name="calculatedPremium3Percent" id="calculatedPremium3Percent" readonly>
         <label class="icon-label"><i class="fa-solid fa-handshake"></i> Agreed to 3% Premium?</label>
         <div class="radio-group">
-          <label><input type="radio" name="agreedToPremium3Percent" value="Yes" required> Yes</label>
-          <label><input type="radio" name="agreedToPremium3Percent" value="No"> No</label>
+          <label><input type="radio" name="agreedToPremium3Percent" value="Yes" required onchange="togglePremiumSections()"> Yes</label>
+          <label><input type="radio" name="agreedToPremium3Percent" value="No" onchange="togglePremiumSections()"> No</label>
         </div>
 
-        <!-- 2% Premium -->
-        <label class="icon-label"><i class="fa-solid fa-percent"></i> Interested for Premium (2% of Sum Insured)</label>
-        <input type="text" name="calculatedPremium2Percent" id="calculatedPremium2Percent" readonly>
-        <label class="icon-label"><i class="fa-solid fa-handshake"></i> Agreed to 2% Premium?</label>
-        <div class="radio-group">
-          <label><input type="radio" name="agreedToPremium2Percent" value="Yes" required> Yes</label>
-          <label><input type="radio" name="agreedToPremium2Percent" value="No"> No</label>
+        <div id="premium2PercentSection">
+            <!-- 2% Premium -->
+            <label class="icon-label"><i class="fa-solid fa-percent"></i> Interested for Premium (2% of Sum Insured)</label>
+            <input type="text" name="calculatedPremium2Percent" id="calculatedPremium2Percent" readonly>
+            <label class="icon-label"><i class="fa-solid fa-handshake"></i> Agreed to 2% Premium?</label>
+            <div class="radio-group">
+              <label><input type="radio" name="agreedToPremium2Percent" value="Yes" required onchange="togglePremiumSections()"> Yes</label>
+              <label><input type="radio" name="agreedToPremium2Percent" value="No" onchange="togglePremiumSections()"> No</label>
+            </div>
         </div>
 
-        <!-- 1% Premium -->
-        <label class="icon-label"><i class="fa-solid fa-percent"></i> Interested for Premium (1% of Sum Insured)</label>
-        <input type="text" name="calculatedPremium1Percent" id="calculatedPremium1Percent" readonly>
-        <label class="icon-label"><i class="fa-solid fa-handshake"></i> Agreed to 1% Premium?</label>
-        <div class="radio-group">
-          <label><input type="radio" name="agreedToPremium1Percent" value="Yes" required> Yes</label>
-          <label><input type="radio" name="agreedToPremium1Percent" value="No"> No</label>
+        <div id="premium1PercentSection">
+            <!-- 1% Premium -->
+            <label class="icon-label"><i class="fa-solid fa-percent"></i> Interested for Premium (1% of Sum Insured)</label>
+            <input type="text" name="calculatedPremium1Percent" id="calculatedPremium1Percent" readonly>
+            <label class="icon-label"><i class="fa-solid fa-handshake"></i> Agreed to 1% Premium?</label>
+            <div class="radio-group">
+              <label><input type="radio" name="agreedToPremium1Percent" value="Yes" required> Yes</label>
+              <label><input type="radio" name="agreedToPremium1Percent" value="No"> No</label>
+            </div>
         </div>
+
       </fieldset>
 
       <button type="submit">Submit Data</button>
     </form>
   </div>
 
+  <!-- Firebase SDKs - These are the scripts you copy from Firebase console -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-messaging-compat.js"></script>
+  
   <script>
+    // Your web app's Firebase configuration - Copied from your provided content
+    const firebaseConfig = {
+      apiKey: "AIzaSyAyMnPuT99qS6firsrk62T76qCWdMbYoMA",
+      authDomain: "farmersurveypushnotifications.firebaseapp.com",
+      projectId: "farmersurveypushnotifications",
+      storageBucket: "farmersurveypushnotifications.firebasestorage.app",
+      messagingSenderId: "14429307335",
+      appId: "1:14429307335:web:9f9061972c3783540399e2"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const messaging = firebase.messaging();
+
+    // Function to request notification permission and get token
+    function requestNotificationPermissionAndToken() {
+      messaging.requestPermission().then(function() {
+        console.log('Notification permission granted.');
+        // Get the FCM registration token
+        // IMPORTANT: Replace 'YOUR_VAPID_PUBLIC_KEY_HERE' with your actual VAPID key from Firebase Console -> Project Settings -> Cloud Messaging -> Web configuration
+        return messaging.getToken({ vapidKey: 'YOUR_VAPID_PUBLIC_KEY_HERE' }); 
+      })
+      .then(function(token) {
+        console.log('FCM Token:', token);
+        // Set the hidden input field with the token
+        document.getElementById('fcmToken').value = token;
+      })
+      .catch(function(error) {
+        console.error('Unable to get permission to notify or get token.', error);
+        // Ensure the fcmToken input exists before trying to set its value
+        const fcmTokenInput = document.getElementById('fcmToken');
+        if (fcmTokenInput) {
+          fcmTokenInput.value = ''; // Clear if permission denied or error
+        }
+      });
+    }
+
+    // Register service worker and then request notification permission
+    function registerServiceWorkerAndRequestPermission() {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/firebase-messaging-sw.js')
+        .then((registration) => {
+          console.log('Service Worker registered with scope:', registration.scope);
+          requestNotificationPermissionAndToken(); // Request permission after service worker is registered
+        })
+        .catch((error) => {
+          console.error('Service Worker registration failed:', error);
+          const fcmTokenInput = document.getElementById('fcmToken');
+          if (fcmTokenInput) {
+            fcmTokenInput.value = 'Service workers not supported or registration failed';
+          }
+        });
+      } else {
+        console.warn('Service workers are not supported in this browser.');
+        const fcmTokenInput = document.getElementById('fcmToken');
+        if (fcmTokenInput) {
+          fcmTokenInput.value = 'Service workers not supported';
+        }
+      }
+    }
+
+    // Optional: Handle foreground messages (when user is on the page)
+    messaging.onMessage((payload) => {
+      console.log('Message received. ', payload);
+      // You can display an in-app notification here instead of a browser notification
+      // For example, using a custom modal or toast message
+      alert(`New message: ${payload.notification.title} - ${payload.notification.body}`); // IMPORTANT: Replace alert with a custom modal for better UX
+    });
+
     // Constants for calculations
     const SQUARE_METERS_PER_HECTARE = 10000;
     const STANDARD_STOCKING_DENSITY_PER_SQM = 50; // 50 pieces per square meter
@@ -393,6 +381,46 @@
       }
     }
 
+    // Function to toggle visibility and enabled state of 2% and 1% premium sections
+    function togglePremiumSections() {
+        const agreedToPremium3Percent = document.querySelector('input[name="agreedToPremium3Percent"]:checked');
+        const agreedToPremium2Percent = document.querySelector('input[name="agreedToPremium2Percent"]:checked'); // Get 2% radio state
+        
+        const premium2PercentSection = document.getElementById('premium2PercentSection');
+        const premium1PercentSection = document.getElementById('premium1PercentSection');
+
+        if (agreedToPremium3Percent && agreedToPremium3Percent.value === 'Yes') {
+            // If 3% is agreed, hide and disable both 2% and 1% sections
+            premium2PercentSection.style.display = 'none';
+            premium1PercentSection.style.display = 'none';
+            
+            // Disable all inputs within these sections
+            premium2PercentSection.querySelectorAll('input, select, textarea, button').forEach(el => el.disabled = true);
+            premium1PercentSection.querySelectorAll('input, select, textarea, button').forEach(el => el.disabled = true);
+
+            // Optionally, clear selected radio buttons in hidden sections to prevent stale data submission
+            document.querySelectorAll('input[name="agreedToPremium2Percent"]:checked').forEach(radio => radio.checked = false);
+            document.querySelectorAll('input[name="agreedToPremium1Percent"]:checked').forEach(radio => radio.checked = false);
+
+        } else {
+            // If 3% is not agreed (i.e., "No" or nothing selected), show 2% section
+            premium2PercentSection.style.display = 'block'; 
+            premium2PercentSection.querySelectorAll('input, select, textarea, button').forEach(el => el.disabled = false);
+
+            // Now check 2% premium for 1% section visibility
+            if (agreedToPremium2Percent && agreedToPremium2Percent.value === 'Yes') {
+                // If 2% is agreed, hide and disable 1% section
+                premium1PercentSection.style.display = 'none';
+                premium1PercentSection.querySelectorAll('input, select, textarea, button').forEach(el => el.disabled = true);
+                document.querySelectorAll('input[name="agreedToPremium1Percent"]:checked').forEach(radio => radio.checked = false);
+            } else {
+                // If 2% is not agreed, show and enable 1% section
+                premium1PercentSection.style.display = 'block';
+                premium1PercentSection.querySelectorAll('input, select, textarea, button').forEach(el => el.disabled = false);
+            }
+        }
+    }
+
     // Handle form submission
     document.getElementById('farmerForm').addEventListener('submit', function(event) {
       event.preventDefault(); // Prevent default form submission
@@ -410,7 +438,7 @@
 
       // Get values for the "Agreed to Premium?" radio buttons
       const agreedToPremium3Percent = document.querySelector('input[name="agreedToPremium3Percent"]:checked');
-      if (aggedToPremium3Percent) { // Fixed typo: aggedToPremium3Percent to agreedToPremium3Percent
+      if (agreedToPremium3Percent) {
         formData.append('agreedToPremium3Percent', agreedToPremium3Percent.value);
       }
       const agreedToPremium2Percent = document.querySelector('input[name="agreedToPremium2Percent"]:checked');
@@ -470,6 +498,7 @@
     window.onload = () => {
       calculatePremiums();
       registerServiceWorkerAndRequestPermission(); // Call this on window load
+      togglePremiumSections(); // Call this on load to set initial visibility based on default/saved state
     };
   </script>
 </body>
