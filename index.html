@@ -193,25 +193,25 @@
           <label><input type="radio" name="agreedToPremium3Percent" value="No" onchange="togglePremiumSections()"> No</label>
         </div>
 
-        <div id="premium2PercentSection">
+        <div id="premium2PercentSection" style="display: none;">
             <!-- 2% Premium -->
             <label class="icon-label"><i class="fa-solid fa-percent"></i> Interested for Premium (2% of Sum Insured)</label>
-            <input type="text" name="calculatedPremium2Percent" id="calculatedPremium2Percent" readonly>
+            <input type="text" name="calculatedPremium2Percent" id="calculatedPremium2Percent" readonly disabled>
             <label class="icon-label"><i class="fa-solid fa-handshake"></i> Agreed to 2% Premium?</label>
             <div class="radio-group">
-              <label><input type="radio" name="agreedToPremium2Percent" value="Yes" required onchange="togglePremiumSections()"> Yes</label>
-              <label><input type="radio" name="agreedToPremium2Percent" value="No" onchange="togglePremiumSections()"> No</label>
+              <label><input type="radio" name="agreedToPremium2Percent" value="Yes" required disabled onchange="togglePremiumSections()"> Yes</label>
+              <label><input type="radio" name="agreedToPremium2Percent" value="No" disabled onchange="togglePremiumSections()"> No</label>
             </div>
         </div>
 
-        <div id="premium1PercentSection">
+        <div id="premium1PercentSection" style="display: none;">
             <!-- 1% Premium -->
             <label class="icon-label"><i class="fa-solid fa-percent"></i> Interested for Premium (1% of Sum Insured)</label>
-            <input type="text" name="calculatedPremium1Percent" id="calculatedPremium1Percent" readonly>
+            <input type="text" name="calculatedPremium1Percent" id="calculatedPremium1Percent" readonly disabled>
             <label class="icon-label"><i class="fa-solid fa-handshake"></i> Agreed to 1% Premium?</label>
             <div class="radio-group">
-              <label><input type="radio" name="agreedToPremium1Percent" value="Yes" required> Yes</label>
-              <label><input type="radio" name="agreedToPremium1Percent" value="No"> No</label>
+              <label><input type="radio" name="agreedToPremium1Percent" value="Yes" required disabled> Yes</label>
+              <label><input type="radio" name="agreedToPremium1Percent" value="No" disabled> No</label>
             </div>
         </div>
 
@@ -384,39 +384,37 @@
     // Function to toggle visibility and enabled state of 2% and 1% premium sections
     function togglePremiumSections() {
         const agreedToPremium3Percent = document.querySelector('input[name="agreedToPremium3Percent"]:checked');
-        const agreedToPremium2Percent = document.querySelector('input[name="agreedToPremium2Percent"]:checked'); // Get 2% radio state
+        const agreedToPremium2Percent = document.querySelector('input[name="agreedToPremium2Percent"]:checked'); 
         
         const premium2PercentSection = document.getElementById('premium2PercentSection');
         const premium1PercentSection = document.getElementById('premium1PercentSection');
 
+        // Helper to set display and disabled state for a section's inputs
+        const setSectionState = (section, display, disabled) => {
+            section.style.display = display;
+            section.querySelectorAll('input, select, textarea, button').forEach(el => el.disabled = disabled);
+            // Optionally clear radio buttons if section is being hidden/disabled
+            if (disabled) {
+                section.querySelectorAll('input[type="radio"]:checked').forEach(radio => radio.checked = false);
+            }
+        };
+
         if (agreedToPremium3Percent && agreedToPremium3Percent.value === 'Yes') {
             // If 3% is agreed, hide and disable both 2% and 1% sections
-            premium2PercentSection.style.display = 'none';
-            premium1PercentSection.style.display = 'none';
+            setSectionState(premium2PercentSection, 'none', true);
+            setSectionState(premium1PercentSection, 'none', true);
             
-            // Disable all inputs within these sections
-            premium2PercentSection.querySelectorAll('input, select, textarea, button').forEach(el => el.disabled = true);
-            premium1PercentSection.querySelectorAll('input, select, textarea, button').forEach(el => el.disabled = true);
-
-            // Optionally, clear selected radio buttons in hidden sections to prevent stale data submission
-            document.querySelectorAll('input[name="agreedToPremium2Percent"]:checked').forEach(radio => radio.checked = false);
-            document.querySelectorAll('input[name="agreedToPremium1Percent"]:checked').forEach(radio => radio.checked = false);
-
         } else {
-            // If 3% is not agreed (i.e., "No" or nothing selected), show 2% section
-            premium2PercentSection.style.display = 'block'; 
-            premium2PercentSection.querySelectorAll('input, select, textarea, button').forEach(el => el.disabled = false);
+            // If 3% is not agreed (i.e., "No" or nothing selected for 3%), show 2% section
+            setSectionState(premium2PercentSection, 'block', false);
 
             // Now check 2% premium for 1% section visibility
             if (agreedToPremium2Percent && agreedToPremium2Percent.value === 'Yes') {
                 // If 2% is agreed, hide and disable 1% section
-                premium1PercentSection.style.display = 'none';
-                premium1PercentSection.querySelectorAll('input, select, textarea, button').forEach(el => el.disabled = true);
-                document.querySelectorAll('input[name="agreedToPremium1Percent"]:checked').forEach(radio => radio.checked = false);
+                setSectionState(premium1PercentSection, 'none', true);
             } else {
                 // If 2% is not agreed, show and enable 1% section
-                premium1PercentSection.style.display = 'block';
-                premium1PercentSection.querySelectorAll('input, select, textarea, button').forEach(el => el.disabled = false);
+                setSectionState(premium1PercentSection, 'block', false);
             }
         }
     }
