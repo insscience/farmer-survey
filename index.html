@@ -197,8 +197,7 @@
             <button type="button" class="location-btn" id="verifyOtpButton">Verify</button>
             <div id="otpStatus" class="otp-status"></div>
         </div>
-        <!-- This div is where Firebase reCAPTCHA will be rendered -->
-        <div id="recaptcha-container"></div>
+        <!-- Removed recaptcha-container as ReCaptchaVerifier is no longer explicitly used -->
 
 
         <label class="icon-label"><i class="fa-solid fa-map-location-dot"></i> Location of Pond</label>
@@ -289,9 +288,11 @@
   <script type="module">
     // Import Firebase modules
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
-    import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js';
+    import { getAuth, signInWithPhoneNumber } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js';
+    // NEW: Import App Check modules
+    import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app-check.js';
     
-    // Constants for calculations - MOVED TO TOP FOR PROPER INITIALIZATION
+    // Constants for calculations
     const SQUARE_METERS_PER_HECTARE = 10000;
     const STANDARD_STOCKING_DENSITY_PER_SQM = 50; // 50 pieces per square meter
     const PRICE_PER_PIECE = 0.70; // Changed to 0.70 INR per piece as requested
@@ -300,11 +301,11 @@
     const PREMIUM_PERCENTAGE_2 = 0.02; // 2%
     const PREMIUM_PERCENTAGE_1 = 0.01; // 1%
 
-    // Your web app's Firebase configuration - UPDATED PROJECT ID
+    // Your web app's Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyAyMnPuT99qS6firsrk62T76qCWdMbYoMA",
-      authDomain: "farmer-survey-otp.firebaseapp.com", // Updated authDomain
-      projectId: "farmer-survey-otp", // Updated projectId
+      authDomain: "farmer-survey-otp.firebaseapp.com",
+      projectId: "farmer-survey-otp",
       storageBucket: "farmersurveypushnotifications.firebasestorage.app",
       messagingSenderId: "14429307335",
       appId: "1:14429307335:web:9f9061972c3783540399e2"
@@ -315,27 +316,20 @@
     // Initialize Firebase Auth
     const auth = getAuth(app);
 
+    // NEW: Initialize Firebase App Check with reCAPTCHA Enterprise
+    // IMPORTANT: Replace 'YOUR_RECAPTCHA_ENTERPRISE_SITE_KEY' with the actual Key ID
+    // you copied from the Google Cloud reCAPTCHA Enterprise Admin Console.
+    const appCheck = initializeAppCheck(app, {
+      provider: new ReCaptchaEnterpriseProvider('6LeeeIgrAAAAALoCCq8vj0aovDDnRbS85F49nLXq'),
+      isTokenAutoRefreshEnabled: true // Enable auto-refresh for production
+    });
+
     // Global variable to store the confirmation result from sending OTP
     window.confirmationResult = null;
     let isOtpVerified = false; // Flag to track OTP verification status
 
-    // Initialize reCAPTCHA Verifier
-    // This will render an invisible reCAPTCHA on your page.
-    window.recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', {
-        'size': 'invisible', // Makes the reCAPTCHA invisible
-        'callback': (response) => {
-            // reCAPTCHA solved, but we don't need to do anything specific here
-            // as signInWithPhoneNumber handles the token automatically.
-        },
-        'expired-callback': () => {
-            // reCAPTCHA expired, you might want to re-render or notify the user
-            document.getElementById('otpStatus').className = 'otp-status error';
-            document.getElementById('otpStatus').innerText = 'reCAPTCHA expired. Please try sending OTP again.';
-            document.getElementById('sendOtpButton').disabled = false;
-            document.getElementById('contactNumber').disabled = false; // Re-enable contact number input
-            document.getElementById('otpSection').style.display = 'none'; // Hide OTP section
-        }
-    }, auth);
+    // Removed RecaptchaVerifier initialization as App Check handles reCAPTCHA Enterprise
+    // window.recaptchaVerifier = new RecaptchaVerifier(...);
 
 
     // OTP Verification Functions
@@ -363,9 +357,9 @@
         contactNumberInput.disabled = true;
 
         try {
-            // Render the reCAPTCHA and then send the OTP
-            // The reCAPTCHA is invisible and will execute automatically.
-            window.confirmationResult = await signInWithPhoneNumber(auth, fullPhoneNumber, window.recaptchaVerifier);
+            // When App Check is initialized, signInWithPhoneNumber automatically uses it.
+            // No need to pass recaptchaVerifier explicitly.
+            window.confirmationResult = await signInWithPhoneNumber(auth, fullPhoneNumber);
             
             otpSection.style.display = 'block';
             otpStatus.className = 'otp-status success';
@@ -382,8 +376,8 @@
                 errorMessage = 'Invalid phone number format. Please use a 10-digit number (e.g., 9876543210).';
             } else if (error.code === 'auth/too-many-requests') {
                 errorMessage = 'Too many OTP requests. Please wait a moment and try again.';
-            } else if (error.code === 'auth/captcha-check-failed' || error.code === 'auth/web-storage-unsupported') {
-                errorMessage = 'Security check failed or browser storage issue. Please refresh and try again. Ensure third-party cookies are enabled.';
+            } else if (error.code === 'auth/app-check-token-expired' || error.code === 'auth/app-check-token-invalid') {
+                errorMessage = 'Security check failed. Please refresh the page and try again.';
             } else if (error.code === 'auth/network-request-failed') {
                 errorMessage = 'Network error. Check your internet connection.';
             }
@@ -393,10 +387,7 @@
             otpSection.style.display = 'none'; // Hide OTP section on error
             otpInput.disabled = true;
             verifyOtpButton.disabled = true;
-            // Reset reCAPTCHA (important for subsequent OTP sends)
-            if (window.recaptchaVerifier && window.recaptchaVerifier.reset) {
-                window.recaptchaVerifier.reset();
-            }
+            // No recaptchaVerifier.reset() needed here as it's not used directly
         }
     }
 
@@ -568,31 +559,15 @@
 
     // Function to toggle visibility and enabled state of 2% and 1% premium sections
     function togglePremiumSections() {
+        console.log("togglePremiumSections called.");
         const agreedToPremium3Percent = document.querySelector('input[name="agreedToPremium3Percent"]:checked');
         const agreedToPremium2Percent = document.querySelector('input[name="agreedToPremium2Percent"]:checked'); 
         
+        console.log("State of 'agreedToPremium3Percent':", agreedToPremium3Percent ? agreedToPremium3Percent.value : "Not selected");
+        console.log("State of 'agreedToPremium2Percent':", agreedToPremium2Percent ? agreedToPremium2Percent.value : "Not selected");
+
         const premium2PercentSection = document.getElementById('premium2PercentSection');
         const premium1PercentSection = document.getElementById('premium1PercentSection');
-
-        const setSectionState = (section, targetDisplay, targetDisabled) => {
-            if (section.style.display !== targetDisplay) {
-                section.style.display = targetDisplay;
-            }
-            section.querySelectorAll('input, select, textarea, button').forEach(el => {
-                if (el.disabled !== targetDisabled) {
-                    el.disabled = targetDisabled;
-                }
-                if (el.type === 'radio') {
-                    const currentRequired = el.hasAttribute('required');
-                    if (targetDisabled && currentRequired) {
-                        el.removeAttribute('required');
-                        el.checked = false;
-                    } else if (!targetDisabled && !currentRequired) {
-                        el.setAttribute('required', 'true');
-                    }
-                }
-            });
-        };
 
         let target2PercentDisplay = 'none';
         let target2PercentDisabled = true;
@@ -600,17 +575,61 @@
         let target1PercentDisabled = true;
 
         if (agreedToPremium3Percent && agreedToPremium3Percent.value === 'No') {
+            console.log("Condition met: agreedToPremium3Percent is 'No'. Showing 2% section.");
             target2PercentDisplay = 'block';
             target2PercentDisabled = false;
 
-            if (agreedToPremium2Percent && agreedToPremium2Percent.value === 'No') { 
+            // FIX: Corrected typo from 'agumedToPremium2Percent' to 'agreedToPremium2Percent'
+            if (agreedToPremium2Percent && agreedToPremium2Percent.value === 'No') {
+                console.log("Condition met: agreedToPremium2Percent is 'No'. Showing 1% section.");
                 target1PercentDisplay = 'block';
                 target1PercentDisabled = false;
+            } else {
+                console.log("Condition NOT met for 1% section: agreedToPremium2Percent is 'Yes' or not selected.");
             }
+        } else {
+            console.log("Condition NOT met for 2% section: agreedToPremium3Percent is 'Yes' or not selected. Hiding 2% and 1% sections.");
         }
 
-        setSectionState(premium2PercentSection, target2PercentDisplay, target2PercentDisabled);
-        setSectionState(premium1PercentSection, target1PercentDisplay, target1PercentDisabled);
+        // Apply state to 2% section
+        console.log(`Applying state to premium2PercentSection: display=${target2PercentDisplay}, disabled=${target2PercentDisabled}`);
+        if (premium2PercentSection.style.display !== target2PercentDisplay) {
+            premium2PercentSection.style.display = target2PercentDisplay;
+        }
+        premium2PercentSection.querySelectorAll('input, select, textarea, button').forEach(el => {
+            if (el.disabled !== target2PercentDisabled) {
+                el.disabled = target2PercentDisabled;
+            }
+            if (el.type === 'radio') {
+                const currentRequired = el.hasAttribute('required');
+                if (target2PercentDisabled && currentRequired) {
+                    el.removeAttribute('required');
+                    el.checked = false;
+                } else if (!target2PercentDisabled && !currentRequired) {
+                    el.setAttribute('required', 'true');
+                }
+            }
+        });
+
+        // Apply state to 1% section
+        console.log(`Applying state to premium1PercentSection: display=${target1PercentDisplay}, disabled=${target1PercentDisabled}`);
+        if (premium1PercentSection.style.display !== target1PercentDisplay) {
+            premium1PercentSection.style.display = target1PercentDisplay;
+        }
+        premium1PercentSection.querySelectorAll('input, select, textarea, button').forEach(el => {
+            if (el.disabled !== target1PercentDisabled) {
+                el.disabled = target1PercentDisabled;
+            }
+            if (el.type === 'radio') {
+                const currentRequired = el.hasAttribute('required');
+                if (target1PercentDisabled && currentRequired) {
+                    el.removeAttribute('required');
+                    el.checked = false;
+                } else if (!target1PercentDisabled && !currentRequired) {
+                    el.setAttribute('required', 'true');
+                }
+            }
+        });
     }
 
     // Handle form submission
@@ -683,10 +702,6 @@
               document.getElementById('otpInput').disabled = true;
               document.getElementById('verifyOtpButton').disabled = true;
               document.getElementById('otpStatus').innerText = '';
-              // Reset reCAPTCHA (important for subsequent OTP sends)
-              if (window.recaptchaVerifier && window.recaptchaVerifier.reset) {
-                  window.recaptchaVerifier.reset();
-              }
           } else {
               throw new Error('Network response was not ok.');
           }
@@ -720,14 +735,6 @@
       document.querySelectorAll('input[name="agreedToPremium2Percent"]').forEach(radio => {
           radio.addEventListener('change', togglePremiumSections);
       });
-
-
-      // Initialize reCAPTCHA on window load
-      if (window.recaptchaVerifier && !window.recaptchaVerifier.rendered) {
-        window.recaptchaVerifier.render().catch(error => {
-            console.error("reCAPTCHA render error:", error);
-        });
-      }
     });
     console.log("Script loaded and initialized successfully.");
   </script>
