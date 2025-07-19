@@ -113,12 +113,65 @@
       margin-right: 5px;
     }
 
+    /* New CSS for blue radio button selection */
+    input[type="radio"]:checked {
+      accent-color: #00796b; /* A shade of blue/teal that matches your theme */
+    }
+
+    /* Style for bold and colored amounts */
+    .amount-display {
+      color: #00796b; /* Blue/teal color */
+      font-weight: bold;
+    }
+
+    /* OTP specific styles */
+    #otpSection {
+        margin-top: 15px;
+        padding: 10px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        background-color: #f9f9f9;
+    }
+    #otpSection label {
+        margin-bottom: 8px;
+    }
+    #otpSection input[type="text"] {
+        width: calc(100% - 80px); /* Adjust width for button */
+        display: inline-block;
+        margin-right: 5px;
+    }
+    #otpSection button {
+        width: 70px; /* Fixed width for verify button */
+        padding: 8px;
+        font-size: 0.9rem;
+        vertical-align: top; /* Align with input field */
+    }
+    .otp-status {
+        margin-top: 10px;
+        font-size: 0.85rem;
+        color: #555;
+    }
+    .otp-status.success {
+        color: #28a745; /* Green for success */
+        font-weight: bold;
+    }
+    .otp-status.error {
+        color: #dc3545; /* Red for error */
+        font-weight: bold;
+    }
+
     @media (max-width: 600px) {
       input, select, textarea, button {
         font-size: 0.9rem;
       }
       .flex-row > div {
         min-width: 100%; /* Stacks elements on small screens */
+      }
+      #otpSection input[type="text"] {
+        width: calc(100% - 75px);
+      }
+      #otpSection button {
+        width: 70px;
       }
     }
   </style>
@@ -136,14 +189,24 @@
         <input type="text" name="farmerName" required>
 
         <label class="icon-label"><i class="fa-solid fa-phone"></i> Contact Number</label>
-        <input type="tel" name="contactNumber" required pattern="[0-9]{10}" placeholder="10-digit number">
+        <input type="tel" name="contactNumber" id="contactNumber" required pattern="[0-9]{10}" placeholder="10-digit number">
+        <button type="button" class="location-btn" id="sendOtpButton">Send OTP</button>
+        <div id="otpSection" style="display: none;">
+            <label for="otpInput">Enter OTP:</label>
+            <input type="text" id="otpInput" placeholder="6-digit OTP" pattern="[0-9]{6}" maxlength="6">
+            <button type="button" class="location-btn" id="verifyOtpButton">Verify</button>
+            <div id="otpStatus" class="otp-status"></div>
+        </div>
+        <!-- This div is where Firebase reCAPTCHA will be rendered -->
+        <div id="recaptcha-container"></div>
+
 
         <label class="icon-label"><i class="fa-solid fa-map-location-dot"></i> Location of Pond</label>
         <input type="text" name="pondLocation" id="pondLocation" required readonly>
-        <button type="button" class="location-btn" onclick="fillLocation('pondLocation')"><i class="fa-solid fa-location-crosshairs"></i> Use My Location</button>
+        <button type="button" class="location-btn" id="useLocationButton"><i class="fa-solid fa-location-crosshairs"></i> Use My Location</button>
 
         <label class="icon-label"><i class="fa-solid fa-water"></i> Area of Pond (in square meters)</label>
-        <input type="number" name="pondAreaSqMeters" id="pondAreaSqMeters" min="0" step="0.01" required oninput="calculatePremiums()">
+        <input type="number" name="pondAreaSqMeters" id="pondAreaSqMeters" min="0" step="0.01" required>
 
         <label class="icon-label"><i class="fa-solid fa-chart-area"></i> Area of Pond (in hectares)</label>
         <input type="text" name="pondAreaHectares" id="pondAreaHectares" readonly>
@@ -178,131 +241,218 @@
       <fieldset>
         <legend>💰 Financial Information</legend>
 
-        <label class="icon-label"><i class="fa-solid fa-money-bill-wave"></i> Total coverage for seed</label>
-        <input type="text" name="totalCoverageForSeed" id="totalCoverageForSeed" readonly>
+        <!-- New descriptive label for Total Coverage / Sum Insured -->
+        <label class="icon-label"><i class="fa-solid fa-money-bill-wave"></i> Insured value for crop loss: <span id="totalCoverageForSeedDisplay"></span> (ফসল ক্ষতির বীমাকৃত মূল্য: <span id="totalCoverageForSeedDisplay2"></span>)</label>
+        <p style="margin-top: 5px; margin-bottom: 15px; color: #555; font-size: 0.9em;">Premium required for coverage. (কভারেজের জন্য প্রিমিয়াম প্রয়োজন।)</p>
 
         <!-- Hidden input for FCM Token -->
         <input type="hidden" name="fcmToken" id="fcmToken">
 
-        <!-- 3% Premium -->
-        <label class="icon-label"><i class="fa-solid fa-percent"></i> Interested for Premium (3% of Sum Insured)</label>
-        <input type="text" name="calculatedPremium3Percent" id="calculatedPremium3Percent" readonly>
-        <label class="icon-label"><i class="fa-solid fa-handshake"></i> Agreed to 3% Premium?</label>
+        <!-- Hidden inputs to store calculated values for submission -->
+        <input type="hidden" name="totalCoverageForSeed" id="totalCoverageForSeed">
+        <input type="hidden" name="calculatedPremium3Percent" id="calculatedPremium3Percent">
+        <input type="hidden" name="calculatedPremium2Percent" id="calculatedPremium2Percent">
+        <input type="hidden" name="calculatedPremium1Percent" id="calculatedPremium1Percent">
+
+        <!-- 3% Premium Section - Merged Question -->
+        <label class="icon-label"><i class="fa-solid fa-percent"></i> Agree to 3% premium? আপনি কি 3% প্রিমিয়ামে সম্মত? <span id="calculatedPremium3PercentDisplay"></span></label>
         <div class="radio-group">
-          <label><input type="radio" name="agreedToPremium3Percent" value="Yes" required onchange="togglePremiumSections()"> Yes</label>
-          <label><input type="radio" name="agreedToPremium3Percent" value="No" onchange="togglePremiumSections()"> No</label>
+          <label><input type="radio" name="agreedToPremium3Percent" value="Yes" required> Yes</label>
+          <label><input type="radio" name="agreedToPremium3Percent" value="No"> No</label>
         </div>
 
         <div id="premium2PercentSection" style="display: none;">
-            <!-- 2% Premium -->
-            <label class="icon-label"><i class="fa-solid fa-percent"></i> Interested for Premium (2% of Sum Insured)</label>
-            <input type="text" name="calculatedPremium2Percent" id="calculatedPremium2Percent" readonly disabled>
-            <label class="icon-label"><i class="fa-solid fa-handshake"></i> Agreed to 2% Premium?</label>
+            <!-- 2% Premium Section - Merged Question -->
+            <label class="icon-label"><i class="fa-solid fa-percent"></i> Agree to 2% premium? আপনি কি 2% প্রিমিয়ামে সম্মত? <span id="calculatedPremium2PercentDisplay"></span></label>
             <div class="radio-group">
-              <label><input type="radio" name="agreedToPremium2Percent" value="Yes" required disabled onchange="togglePremiumSections()"> Yes</label>
-              <label><input type="radio" name="agreedToPremium2Percent" value="No" disabled onchange="togglePremiumSections()"> No</label>
+              <label><input type="radio" name="agreedToPremium2Percent" value="Yes" required> Yes</label>
+              <label><input type="radio" name="agreedToPremium2Percent" value="No"> No</label>
             </div>
         </div>
 
         <div id="premium1PercentSection" style="display: none;">
-            <!-- 1% Premium -->
-            <label class="icon-label"><i class="fa-solid fa-percent"></i> Interested for Premium (1% of Sum Insured)</label>
-            <input type="text" name="calculatedPremium1Percent" id="calculatedPremium1Percent" readonly disabled>
-            <label class="icon-label"><i class="fa-solid fa-handshake"></i> Agreed to 1% Premium?</label>
+            <!-- 1% Premium Section - Merged Question -->
+            <label class="icon-label"><i class="fa-solid fa-percent"></i> Agree to 1% premium? আপনি কি 1% প্রিমিয়ামে সম্মত? <span id="calculatedPremium1PercentDisplay"></span></label>
             <div class="radio-group">
-              <label><input type="radio" name="agreedToPremium1Percent" value="Yes" required disabled> Yes</label>
-              <label><input type="radio" name="agreedToPremium1Percent" value="No" disabled> No</label>
+              <label><input type="radio" name="agreedToPremium1Percent" value="Yes" required> Yes</label>
+              <label><input type="radio" name="agreedToPremium1Percent" value="No"> No</label>
             </div>
         </div>
 
       </fieldset>
 
-      <button type="submit">Submit Data</button>
+      <button type="submit" id="submitButton" disabled>Submit Data</button>
     </form>
   </div>
 
-  <!-- Firebase SDKs - These are the scripts you copy from Firebase console -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-messaging-compat.js"></script>
-  
-  <script>
-    // Your web app's Firebase configuration - Copied from your provided content
+  <!-- Firebase SDKs -->
+  <script type="module">
+    // Import Firebase modules
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
+    import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js';
+    
+    // Constants for calculations - MOVED TO TOP FOR PROPER INITIALIZATION
+    const SQUARE_METERS_PER_HECTARE = 10000;
+    const STANDARD_STOCKING_DENSITY_PER_SQM = 50; // 50 pieces per square meter
+    const PRICE_PER_PIECE = 0.70; // Changed to 0.70 INR per piece as requested
+
+    const PREMIUM_PERCENTAGE_3 = 0.03; // 3%
+    const PREMIUM_PERCENTAGE_2 = 0.02; // 2%
+    const PREMIUM_PERCENTAGE_1 = 0.01; // 1%
+
+    // Your web app's Firebase configuration - UPDATED PROJECT ID
     const firebaseConfig = {
       apiKey: "AIzaSyAyMnPuT99qS6firsrk62T76qCWdMbYoMA",
-      authDomain: "farmersurveypushnotifications.firebaseapp.com",
-      projectId: "farmersurveypushnotifications",
+      authDomain: "farmer-survey-otp.firebaseapp.com", // Updated authDomain
+      projectId: "farmer-survey-otp", // Updated projectId
       storageBucket: "farmersurveypushnotifications.firebasestorage.app",
       messagingSenderId: "14429307335",
       appId: "1:14429307335:web:9f9061972c3783540399e2"
     };
 
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const messaging = firebase.messaging();
+    // Initialize Firebase App
+    const app = initializeApp(firebaseConfig);
+    // Initialize Firebase Auth
+    const auth = getAuth(app);
 
-    // Function to request notification permission and get token
-    function requestNotificationPermissionAndToken() {
-      messaging.requestPermission().then(function() {
-        console.log('Notification permission granted.');
-        // Get the FCM registration token
-        // IMPORTANT: Replace 'YOUR_VAPID_PUBLIC_KEY_HERE' with your actual VAPID key from Firebase Console -> Project Settings -> Cloud Messaging -> Web configuration
-        return messaging.getToken({ vapidKey: 'YOUR_VAPID_PUBLIC_KEY_HERE' }); 
-      })
-      .then(function(token) {
-        console.log('FCM Token:', token);
-        // Set the hidden input field with the token
-        document.getElementById('fcmToken').value = token;
-      })
-      .catch(function(error) {
-        console.error('Unable to get permission to notify or get token.', error);
-        // Ensure the fcmToken input exists before trying to set its value
-        const fcmTokenInput = document.getElementById('fcmToken');
-        if (fcmTokenInput) {
-          fcmTokenInput.value = ''; // Clear if permission denied or error
+    // Global variable to store the confirmation result from sending OTP
+    window.confirmationResult = null;
+    let isOtpVerified = false; // Flag to track OTP verification status
+
+    // Initialize reCAPTCHA Verifier
+    // This will render an invisible reCAPTCHA on your page.
+    window.recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', {
+        'size': 'invisible', // Makes the reCAPTCHA invisible
+        'callback': (response) => {
+            // reCAPTCHA solved, but we don't need to do anything specific here
+            // as signInWithPhoneNumber handles the token automatically.
+        },
+        'expired-callback': () => {
+            // reCAPTCHA expired, you might want to re-render or notify the user
+            document.getElementById('otpStatus').className = 'otp-status error';
+            document.getElementById('otpStatus').innerText = 'reCAPTCHA expired. Please try sending OTP again.';
+            document.getElementById('sendOtpButton').disabled = false;
+            document.getElementById('contactNumber').disabled = false; // Re-enable contact number input
+            document.getElementById('otpSection').style.display = 'none'; // Hide OTP section
         }
-      });
+    }, auth);
+
+
+    // OTP Verification Functions
+    async function sendOTP() {
+        const contactNumberInput = document.getElementById('contactNumber');
+        const otpSection = document.getElementById('otpSection');
+        const otpStatus = document.getElementById('otpStatus');
+        const sendOtpButton = document.getElementById('sendOtpButton');
+        const verifyOtpButton = document.getElementById('verifyOtpButton');
+        const otpInput = document.getElementById('otpInput');
+        
+        if (!contactNumberInput.checkValidity()) {
+            contactNumberInput.reportValidity();
+            return;
+        }
+
+        const phoneNumber = contactNumberInput.value;
+        // Firebase requires phone numbers to be in E.164 format (e.g., +919876543210)
+        // Assuming Indian numbers, adding +91 prefix if not present. Adjust for other countries.
+        const fullPhoneNumber = phoneNumber.startsWith('+') ? phoneNumber : `+91${phoneNumber}`;
+
+        otpStatus.className = 'otp-status';
+        otpStatus.innerText = 'Sending OTP...';
+        sendOtpButton.disabled = true;
+        contactNumberInput.disabled = true;
+
+        try {
+            // Render the reCAPTCHA and then send the OTP
+            // The reCAPTCHA is invisible and will execute automatically.
+            window.confirmationResult = await signInWithPhoneNumber(auth, fullPhoneNumber, window.recaptchaVerifier);
+            
+            otpSection.style.display = 'block';
+            otpStatus.className = 'otp-status success';
+            otpStatus.innerText = 'OTP sent successfully! Please enter it below.';
+            otpInput.disabled = false;
+            verifyOtpButton.disabled = false;
+            otpInput.focus();
+
+        } catch (error) {
+            console.error("Error sending OTP:", error);
+            otpStatus.className = 'otp-status error';
+            let errorMessage = 'Failed to send OTP. Please try again.';
+            if (error.code === 'auth/invalid-phone-number') {
+                errorMessage = 'Invalid phone number format. Please use a 10-digit number (e.g., 9876543210).';
+            } else if (error.code === 'auth/too-many-requests') {
+                errorMessage = 'Too many OTP requests. Please wait a moment and try again.';
+            } else if (error.code === 'auth/captcha-check-failed' || error.code === 'auth/web-storage-unsupported') {
+                errorMessage = 'Security check failed or browser storage issue. Please refresh and try again. Ensure third-party cookies are enabled.';
+            } else if (error.code === 'auth/network-request-failed') {
+                errorMessage = 'Network error. Check your internet connection.';
+            }
+            otpStatus.innerText = errorMessage;
+            sendOtpButton.disabled = false; // Re-enable send button on error
+            contactNumberInput.disabled = false; // Re-enable contact number input on error
+            otpSection.style.display = 'none'; // Hide OTP section on error
+            otpInput.disabled = true;
+            verifyOtpButton.disabled = true;
+            // Reset reCAPTCHA (important for subsequent OTP sends)
+            if (window.recaptchaVerifier && window.recaptchaVerifier.reset) {
+                window.recaptchaVerifier.reset();
+            }
+        }
     }
 
-    // Register service worker and then request notification permission
-    function registerServiceWorkerAndRequestPermission() {
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/firebase-messaging-sw.js')
-        .then((registration) => {
-          console.log('Service Worker registered with scope:', registration.scope);
-          requestNotificationPermissionAndToken(); // Request permission after service worker is registered
-        })
-        .catch((error) => {
-          console.error('Service Worker registration failed:', error);
-          const fcmTokenInput = document.getElementById('fcmToken');
-          if (fcmTokenInput) {
-            fcmTokenInput.value = 'Service workers not supported or registration failed';
-          }
-        });
-      } else {
-        console.warn('Service workers are not supported in this browser.');
-        const fcmTokenInput = document.getElementById('fcmToken');
-        if (fcmTokenInput) {
-          fcmTokenInput.value = 'Service workers not supported';
+    async function verifyOTP() {
+        const otpInput = document.getElementById('otpInput');
+        const otpStatus = document.getElementById('otpStatus');
+        const submitButton = document.getElementById('submitButton');
+        const verifyOtpButton = document.getElementById('verifyOtpButton');
+
+        const otpCode = otpInput.value;
+
+        if (!otpCode || otpCode.length !== 6) { // Firebase OTPs are typically 6 digits
+            otpStatus.className = 'otp-status error';
+            otpStatus.innerText = 'Please enter a 6-digit OTP.';
+            return;
         }
-      }
+
+        otpStatus.className = 'otp-status';
+        otpStatus.innerText = 'Verifying OTP...';
+        verifyOtpButton.disabled = true;
+        otpInput.disabled = true;
+
+        try {
+            if (window.confirmationResult) {
+                await window.confirmationResult.confirm(otpCode);
+                isOtpVerified = true;
+                otpStatus.className = 'otp-status success';
+                otpStatus.innerText = 'OTP Verified Successfully!';
+                submitButton.disabled = false; // Enable submit button
+            } else {
+                otpStatus.className = 'otp-status error';
+                otpStatus.innerText = 'OTP session expired or not initiated. Please send OTP again.';
+                isOtpVerified = false;
+                document.getElementById('sendOtpButton').disabled = false;
+                document.getElementById('contactNumber').disabled = false;
+                otpSection.style.display = 'none';
+            }
+        } catch (error) {
+            console.error("Error verifying OTP:", error);
+            isOtpVerified = false;
+            otpStatus.className = 'otp-status error';
+            let errorMessage = 'Invalid OTP. Please try again.';
+            if (error.code === 'auth/invalid-verification-code') {
+                errorMessage = 'The verification code is invalid.';
+            } else if (error.code === 'auth/code-expired') {
+                errorMessage = 'The verification code has expired. Please send OTP again.';
+            }
+            otpStatus.innerText = errorMessage;
+            submitButton.disabled = true; // Keep submit button disabled
+            otpInput.value = ''; // Clear input for retry
+            otpInput.disabled = false; // Re-enable OTP input
+            verifyOtpButton.disabled = false; // Re-enable verify button
+            otpInput.focus();
+        }
     }
 
-    // Optional: Handle foreground messages (when user is on the page)
-    messaging.onMessage((payload) => {
-      console.log('Message received. ', payload);
-      // You can display an in-app notification here instead of a browser notification
-      // For example, using a custom modal or toast message
-      alert(`New message: ${payload.notification.title} - ${payload.notification.body}`); // IMPORTANT: Replace alert with a custom modal for better UX
-    });
-
-    // Constants for calculations
-    const SQUARE_METERS_PER_HECTARE = 10000;
-    const STANDARD_STOCKING_DENSITY_PER_SQM = 50; // 50 pieces per square meter
-    const PRICE_PER_PIECE = 0.35; // Changed to 0.35 INR per piece as requested
-
-    const PREMIUM_PERCENTAGE_3 = 0.03; // 3%
-    const PREMIUM_PERCENTAGE_2 = 0.02; // 2%
-    const PREMIUM_PERCENTAGE_1 = 0.01; // 1%
 
     // Function to fill location fields with GPS coordinates
     function fillLocation(fieldId) {
@@ -325,59 +475,94 @@
 
     // Function to perform all calculations and update fields
     function calculatePremiums() {
+      console.log("calculatePremiums called."); // Debugging: Check if function is called
       const pondAreaSqMetersInput = document.getElementById("pondAreaSqMeters");
       const pondAreaHectaresInput = document.getElementById("pondAreaHectares");
-      const totalCoverageForSeedInput = document.getElementById("totalCoverageForSeed"); 
+      
+      console.log("pondAreaSqMetersInput element:", pondAreaSqMetersInput); // Debugging: Check element reference
+      console.log("pondAreaHectaresInput element:", pondAreaHectaresInput); // Debugging: Check element reference
 
-      const calculatedPremium3PercentInput = document.getElementById("calculatedPremium3Percent");
-      const calculatedPremium2PercentInput = document.getElementById("calculatedPremium2Percent");
-      const calculatedPremium1PercentInput = document.getElementById("calculatedPremium1Percent");
+      // Display spans
+      const totalCoverageForSeedDisplay = document.getElementById("totalCoverageForSeedDisplay"); 
+      const totalCoverageForSeedDisplay2 = document.getElementById("totalCoverageForSeedDisplay2"); 
+      const calculatedPremium3PercentDisplay = document.getElementById("calculatedPremium3PercentDisplay");
+      const calculatedPremium2PercentDisplay = document.getElementById("calculatedPremium2PercentDisplay");
+      const calculatedPremium1PercentDisplay = document.getElementById("calculatedPremium1PercentDisplay");
 
-      const pondAreaSqMeters = parseFloat(pondAreaSqMetersInput.value);
+      // Hidden inputs for form submission
+      const totalCoverageForSeedHidden = document.getElementById("totalCoverageForSeed"); 
+      const calculatedPremium3PercentHidden = document.getElementById("calculatedPremium3Percent");
+      const calculatedPremium2PercentHidden = document.getElementById("calculatedPremium2Percent");
+      const calculatedPremium1PercentHidden = document.getElementById("calculatedPremium1Percent");
+
+      const pondAreaSqMetersValue = pondAreaSqMetersInput.value;
+      console.log("Raw pondAreaSqMetersInput.value:", pondAreaSqMetersValue); // Debugging: Check raw input value
+      const pondAreaSqMeters = parseFloat(pondAreaSqMetersValue);
+      console.log("Parsed pondAreaSqMeters:", pondAreaSqMeters); // Debugging: Check parsed float value
       
       let pondAreaHectares = 0;
       if (!isNaN(pondAreaSqMeters) && pondAreaSqMeters >= 0) {
         pondAreaHectares = pondAreaSqMeters / SQUARE_METERS_PER_HECTARE;
         pondAreaHectaresInput.value = pondAreaHectares.toFixed(4); // Display with 4 decimal places
+        console.log("Calculated pondAreaHectares:", pondAreaHectares); // Debugging: Check calculated hectares
+        console.log("pondAreaHectaresInput.value set to:", pondAreaHectaresInput.value); // Debugging: Confirm value set
       } else {
-        pondAreaHectaresInput.value = '';
+        totalCoverageForSeedDisplay.innerHTML = '';
+        totalCoverageForSeedDisplay2.innerHTML = '';
+        totalCoverageForSeedHidden.value = '';
+        pondAreaHectaresInput.value = ''; // Ensure hectares field is cleared
+        console.log("Sum Insured set to empty due to invalid hectares or zero hectares."); // Debugging
       }
 
       // Calculate Total coverage for seed (which is the Sum Insured)
-      // This is based on STANDARD_STOCKING_DENSITY_PER_SQM * SQUARE_METERS_PER_HECTARE * PRICE_PER_PIECE
       let calculatedSumInsured = 0;
-      if (!isNaN(pondAreaHectares) && pondAreaHectares >= 0) {
+      if (!isNaN(pondAreaHectares) && pondAreaHectares > 0) {
         calculatedSumInsured = pondAreaHectares * STANDARD_STOCKING_DENSITY_PER_SQM * SQUARE_METERS_PER_HECTARE * PRICE_PER_PIECE;
-        totalCoverageForSeedInput.value = calculatedSumInsured.toLocaleString('en-IN', { style: 'currency', currency: 'INR' });
+        const formattedSumInsured = calculatedSumInsured.toLocaleString('en-IN', { style: 'currency', currency: 'INR' });
+        totalCoverageForSeedDisplay.innerHTML = `<span class="amount-display">${formattedSumInsured}</span>`;
+        totalCoverageForSeedDisplay2.innerHTML = `<span class="amount-display">${formattedSumInsured}</span>`;
+        totalCoverageForSeedHidden.value = calculatedSumInsured.toFixed(2);
+        console.log("Calculated Sum Insured:", calculatedSumInsured); // Debugging: Check sum insured
       } else {
-        totalCoverageForSeedInput.value = '';
+        totalCoverageForSeedDisplay.innerHTML = '';
+        totalCoverageForSeedDisplay2.innerHTML = '';
+        totalCoverageForSeedHidden.value = '';
       }
 
       // Calculate and display 3% premium
       let calculatedPremium3Percent = 0;
       if (!isNaN(calculatedSumInsured) && calculatedSumInsured > 0) {
         calculatedPremium3Percent = calculatedSumInsured * PREMIUM_PERCENTAGE_3;
-        calculatedPremium3PercentInput.value = calculatedPremium3Percent.toLocaleString('en-IN', { style: 'currency', currency: 'INR' });
+        calculatedPremium3PercentDisplay.innerHTML = `<span class="amount-display">${calculatedPremium3Percent.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}</span>`;
+        calculatedPremium3PercentHidden.value = calculatedPremium3Percent.toFixed(2);
+        console.log("Calculated 3% Premium:", calculatedPremium3Percent); // Debugging
       } else {
-        calculatedPremium3PercentInput.value = '';
+        calculatedPremium3PercentDisplay.innerHTML = '';
+        calculatedPremium3PercentHidden.value = '';
       }
 
       // Calculate and display 2% premium
       let calculatedPremium2Percent = 0;
       if (!isNaN(calculatedSumInsured) && calculatedSumInsured > 0) {
         calculatedPremium2Percent = calculatedSumInsured * PREMIUM_PERCENTAGE_2;
-        calculatedPremium2PercentInput.value = calculatedPremium2Percent.toLocaleString('en-IN', { style: 'currency', currency: 'INR' });
+        calculatedPremium2PercentDisplay.innerHTML = `<span class="amount-display">${calculatedPremium2Percent.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}</span>`;
+        calculatedPremium2PercentHidden.value = calculatedPremium2Percent.toFixed(2);
+        console.log("Calculated 2% Premium:", calculatedPremium2Percent); // Debugging
       } else {
-        calculatedPremium2PercentInput.value = '';
+        calculatedPremium2PercentDisplay.innerHTML = '';
+        calculatedPremium2PercentHidden.value = '';
       }
 
       // Calculate and display 1% premium
       let calculatedPremium1Percent = 0;
       if (!isNaN(calculatedSumInsured) && calculatedSumInsured > 0) {
         calculatedPremium1Percent = calculatedSumInsured * PREMIUM_PERCENTAGE_1;
-        calculatedPremium1PercentInput.value = calculatedPremium1Percent.toLocaleString('en-IN', { style: 'currency', currency: 'INR' });
+        calculatedPremium1PercentDisplay.innerHTML = `<span class="amount-display">${calculatedPremium1Percent.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}</span>`;
+        calculatedPremium1PercentHidden.value = calculatedPremium1Percent.toFixed(2);
+        console.log("Calculated 1% Premium:", calculatedPremium1Percent); // Debugging
       } else {
-        calculatedPremium1PercentInput.value = '';
+        calculatedPremium1PercentDisplay.innerHTML = '';
+        calculatedPremium1PercentHidden.value = '';
       }
     }
 
@@ -389,115 +574,163 @@
         const premium2PercentSection = document.getElementById('premium2PercentSection');
         const premium1PercentSection = document.getElementById('premium1PercentSection');
 
-        // Helper to set display and disabled state for a section's inputs
-        const setSectionState = (section, display, disabled) => {
-            section.style.display = display;
-            section.querySelectorAll('input, select, textarea, button').forEach(el => el.disabled = disabled);
-            // Optionally clear radio buttons if section is being hidden/disabled
-            if (disabled) {
-                section.querySelectorAll('input[type="radio"]:checked').forEach(radio => radio.checked = false);
+        const setSectionState = (section, targetDisplay, targetDisabled) => {
+            if (section.style.display !== targetDisplay) {
+                section.style.display = targetDisplay;
             }
+            section.querySelectorAll('input, select, textarea, button').forEach(el => {
+                if (el.disabled !== targetDisabled) {
+                    el.disabled = targetDisabled;
+                }
+                if (el.type === 'radio') {
+                    const currentRequired = el.hasAttribute('required');
+                    if (targetDisabled && currentRequired) {
+                        el.removeAttribute('required');
+                        el.checked = false;
+                    } else if (!targetDisabled && !currentRequired) {
+                        el.setAttribute('required', 'true');
+                    }
+                }
+            });
         };
 
-        if (agreedToPremium3Percent && agreedToPremium3Percent.value === 'Yes') {
-            // If 3% is agreed, hide and disable both 2% and 1% sections
-            setSectionState(premium2PercentSection, 'none', true);
-            setSectionState(premium1PercentSection, 'none', true);
-            
-        } else {
-            // If 3% is not agreed (i.e., "No" or nothing selected for 3%), show 2% section
-            setSectionState(premium2PercentSection, 'block', false);
+        let target2PercentDisplay = 'none';
+        let target2PercentDisabled = true;
+        let target1PercentDisplay = 'none';
+        let target1PercentDisabled = true;
 
-            // Now check 2% premium for 1% section visibility
-            if (agreedToPremium2Percent && agreedToPremium2Percent.value === 'Yes') {
-                // If 2% is agreed, hide and disable 1% section
-                setSectionState(premium1PercentSection, 'none', true);
-            } else {
-                // If 2% is not agreed, show and enable 1% section
-                setSectionState(premium1PercentSection, 'block', false);
+        if (agreedToPremium3Percent && agreedToPremium3Percent.value === 'No') {
+            target2PercentDisplay = 'block';
+            target2PercentDisabled = false;
+
+            if (agreedToPremium2Percent && agreedToPremium2Percent.value === 'No') { 
+                target1PercentDisplay = 'block';
+                target1PercentDisabled = false;
             }
         }
+
+        setSectionState(premium2PercentSection, target2PercentDisplay, target2PercentDisabled);
+        setSectionState(premium1PercentSection, target1PercentDisplay, target1PercentDisabled);
     }
 
     // Handle form submission
-    document.getElementById('farmerForm').addEventListener('submit', function(event) {
-      event.preventDefault(); // Prevent default form submission
+    document.getElementById('farmerForm').addEventListener('submit', async function(event) {
+      event.preventDefault();
+
+      if (!isOtpVerified) {
+          alert('Please verify your mobile number with OTP before submitting.');
+          return;
+      }
 
       const form = event.target;
-      const formData = new FormData(form);
-
-      // Manually add calculated read-only values to FormData
-      formData.append('pondAreaHectares', document.getElementById('pondAreaHectares').value);
-      formData.append('totalCoverageForSeed', document.getElementById('totalCoverageForSeed').value); 
-      formData.append('calculatedPremium3Percent', document.getElementById('calculatedPremium3Percent').value);
-      formData.append('calculatedPremium2Percent', document.getElementById('calculatedPremium2Percent').value);
-      formData.append('calculatedPremium1Percent', document.getElementById('calculatedPremium1Percent').value);
-      formData.append('fcmToken', document.getElementById('fcmToken').value); // Add FCM token
-
-      // Get values for the "Agreed to Premium?" radio buttons
-      const agreedToPremium3Percent = document.querySelector('input[name="agreedToPremium3Percent"]:checked');
-      if (agreedToPremium3Percent) {
-        formData.append('agreedToPremium3Percent', agreedToPremium3Percent.value);
-      }
-      const agreedToPremium2Percent = document.querySelector('input[name="agreedToPremium2Percent"]:checked');
-      if (agreedToPremium2Percent) {
-        formData.append('agreedToPremium2Percent', agreedToPremium2Percent.value);
-      }
-      const agreedToPremium1Percent = document.querySelector('input[name="agreedToPremium1Percent"]:checked');
-      if (agreedToPremium1Percent) {
-        formData.append('agreedToPremium1Percent', agreedToPremium1Percent.value);
-      }
-
-      // Add white spot disease field to formData
-      const whiteSpotDisease = document.querySelector('input[name="whiteSpotDisease"]:checked');
-      if (whiteSpotDisease) {
-        formData.append('whiteSpotDisease', whiteSpotDisease.value);
-      }
-
-
-      // You can add a loading indicator here
-      const submitButton = form.querySelector('button[type="submit"]');
+      const submitButton = document.getElementById('submitButton');
       submitButton.disabled = true;
       submitButton.textContent = 'Submitting...';
 
-      // Replace 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE' with your actual Google Apps Script Web App URL
-      // This URL is obtained after deploying your Apps Script as a web app.
+      const formData = new FormData(form);
+      const payload = {};
+      for (const [key, value] of formData.entries()) {
+          payload[key] = value;
+      }
+
+      payload['pondAreaHectares'] = document.getElementById('pondAreaHectares').value;
+      payload['totalCoverageForSeed'] = document.getElementById('totalCoverageForSeed').value;
+      payload['calculatedPremium3Percent'] = document.getElementById('calculatedPremium3Percent').value;
+      payload['calculatedPremium2Percent'] = document.getElementById('calculatedPremium2Percent').value;
+      payload['calculatedPremium1Percent'] = document.getElementById('calculatedPremium1Percent').value;
+      
+      const agreedToPremium3Percent = document.querySelector('input[name="agreedToPremium3Percent"]:checked');
+      if (agreedToPremium3Percent) {
+        payload['agreedToPremium3Percent'] = agreedToPremium3Percent.value;
+      }
+      const agreedToPremium2Percent = document.querySelector('input[name="agreedToPremium2Percent"]:checked');
+      if (agreedToPremium2Percent) {
+        // CORRECTED: Typo fixed from 'agumedToPremium2Percent' to 'agreedToPremium2Percent'
+        payload['agreedToPremium2Percent'] = agreedToPremium2Percent.value; 
+      }
+      const agreedToPremium1Percent = document.querySelector('input[name="agreedToPremium1Percent"]:checked');
+      if (agreedToPremium1Percent) { 
+        payload['agreedToPremium1Percent'] = agreedToPremium1Percent.value;
+      }
+
+      const whiteSpotDisease = document.querySelector('input[name="whiteSpotDisease"]:checked');
+      if (whiteSpotDisease) {
+        payload['whiteSpotDisease'] = whiteSpotDisease.value;
+      }
+
+      // Your Google Apps Script URL remains the same
       const appsScriptUrl = 'https://script.google.com/macros/s/AKfycbwg-tl62MC-bxfEbA6L1tgfx1O6Fmrug-lYj5Z8EjE8zlAHsLm9lqS994CjTubTt39U/exec'; // Placeholder
 
-      fetch(appsScriptUrl, {
-        method: 'POST',
-        body: formData // Send FormData directly
-      })
-      .then(response => {
-        if (response.ok) {
-          return response.text();
-        }
-        throw new Error('Network response was not ok.');
-      })
-      .then(result => {
-        console.log('Success:', result);
-        // IMPORTANT: Replace alert with a custom modal for better UX
-        alert('Survey data submitted successfully!');
-        form.reset(); // Clear the form
-        calculatePremiums(); // Re-initialize calculated fields
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        // IMPORTANT: Replace alert with a custom modal for better UX
-        alert('There was an error submitting your data. Please try again.');
-      })
-      .finally(() => {
-        submitButton.disabled = false;
-        submitButton.textContent = 'Submit Data';
-      });
+      try {
+          const response = await fetch(appsScriptUrl, {
+              method: 'POST',
+              body: JSON.stringify(payload),
+              headers: {
+                  'Content-Type': 'application/json'
+              }
+          });
+
+          if (response.ok) {
+              const result = await response.text();
+              console.log('Success:', result);
+              alert('Survey data submitted successfully!');
+              form.reset();
+              calculatePremiums();
+              isOtpVerified = false;
+              document.getElementById('submitButton').disabled = true;
+              document.getElementById('otpSection').style.display = 'none';
+              document.getElementById('sendOtpButton').disabled = false;
+              document.getElementById('contactNumber').disabled = false;
+              document.getElementById('otpInput').disabled = true;
+              document.getElementById('verifyOtpButton').disabled = true;
+              document.getElementById('otpStatus').innerText = '';
+              // Reset reCAPTCHA (important for subsequent OTP sends)
+              if (window.recaptchaVerifier && window.recaptchaVerifier.reset) {
+                  window.recaptchaVerifier.reset();
+              }
+          } else {
+              throw new Error('Network response was not ok.');
+          }
+      } catch (error) {
+          console.error('Error:', error);
+          alert('There was an error submitting your data. Please try again.');
+      } finally {
+          submitButton.disabled = false;
+          submitButton.textContent = 'Submit Data';
+      }
     });
 
-    // Initial calculations and Service Worker registration on page load
-    window.onload = () => {
-      calculatePremiums();
-      registerServiceWorkerAndRequestPermission(); // Call this on window load
-      togglePremiumSections(); // Call this on load to set initial visibility based on default/saved state
-    };
+    // Initializations on page load and event listeners
+    window.addEventListener('load', () => {
+      calculatePremiums(); // Initial calculation on load
+      togglePremiumSections(); // Initial toggle on load
+      document.getElementById('submitButton').disabled = true;
+      document.getElementById('otpInput').disabled = true;
+      document.getElementById('verifyOtpButton').disabled = true;
+      
+      // Attach event listeners
+      document.getElementById('sendOtpButton').addEventListener('click', sendOTP);
+      document.getElementById('verifyOtpButton').addEventListener('click', verifyOTP);
+      document.getElementById('useLocationButton').addEventListener('click', () => fillLocation('pondLocation'));
+      document.getElementById('pondAreaSqMeters').addEventListener('input', calculatePremiums);
+
+      // Attach radio button change listeners for premium sections
+      document.querySelectorAll('input[name="agreedToPremium3Percent"]').forEach(radio => {
+          radio.addEventListener('change', togglePremiumSections);
+      });
+      document.querySelectorAll('input[name="agreedToPremium2Percent"]').forEach(radio => {
+          radio.addEventListener('change', togglePremiumSections);
+      });
+
+
+      // Initialize reCAPTCHA on window load
+      if (window.recaptchaVerifier && !window.recaptchaVerifier.rendered) {
+        window.recaptchaVerifier.render().catch(error => {
+            console.error("reCAPTCHA render error:", error);
+        });
+      }
+    });
+    console.log("Script loaded and initialized successfully.");
   </script>
 </body>
 </html>
