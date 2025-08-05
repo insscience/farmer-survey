@@ -210,10 +210,11 @@
 
   <script>
     // --- Configuration ---
-    // IMPORTANT: This URL is used for OTP authentication
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx0TAX8kmkP6IYf_qcE3i5oe7iu2yDtspkNiJ0Me2DZK0Y4hIelU08JhgU0mPlBBTDYsw/exec";
+    // IMPORTANT: These URLs are now set to your Twilio Function URLs
+    const TWILIO_SEND_OTP_URL = "https://farmersurveyotp-1152.twil.io/send-otp"; 
+    const TWILIO_VERIFY_OTP_URL = "https://farmersurveyotp-1152.twil.io/verify-otp"; 
     
-    // IMPORTANT: This URL is for your original form data submission backend
+    // IMPORTANT: This URL is for your original Google Apps Script form data submission backend
     const formSubmitAppsScriptUrl = 'https://script.google.com/macros/s/AKfycbwg-tl62MC-bxfEbA6L1tgfx1O6Fmrug-lYj5Z8EjE8zlAHsLm9lqS994CjTubTt39U/exec';
 
     // Constants for calculations
@@ -351,9 +352,9 @@
       }
     }
 
-    // --- OTP Functions (using Apps Script backend) ---
+    // --- OTP Functions (using Twilio Functions backend) ---
 
-    // Function to send OTP via a backend service
+    // Function to send OTP via Twilio Function
     async function sendOTP() {
       let phoneNumber = document.getElementById('phoneNumber').value.trim();
 
@@ -371,26 +372,25 @@
           return;
       }
 
-
       // Disable buttons to prevent multiple clicks
       document.getElementById('sendOtpButton').disabled = true;
       document.getElementById('phoneNumber').disabled = true;
 
       try {
         showMessageBox("Sending OTP...", "info");
-        const response = await fetch(`${APPS_SCRIPT_URL}?action=send-otp`, {
+        const response = await fetch(TWILIO_SEND_OTP_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ phoneNumber })
         });
 
         const data = await response.json();
-        if (data.success) {
+        if (response.ok && data.success) { // Check both response.ok and data.success
           showMessageBox("OTP sent successfully! Please check your phone.", "success");
           document.getElementById('otpInput').disabled = false;
           document.getElementById('verifyOtpButton').disabled = false;
         } else {
-          showMessageBox(`Failed to send OTP: ${data.message}`, "error");
+          showMessageBox(`Failed to send OTP: ${data.message || 'Server error'}`, "error");
           document.getElementById('phoneNumber').disabled = false; // Re-enable if send failed
         }
       } catch (error) {
@@ -401,7 +401,7 @@
       }
     }
 
-    // Function to verify OTP via a backend service
+    // Function to verify OTP via Twilio Function
     async function verifyOTP() {
       const phoneNumber = document.getElementById('phoneNumber').value;
       const otp = document.getElementById('otpInput').value;
@@ -415,21 +415,21 @@
 
       try {
         showMessageBox("Verifying OTP...", "info");
-        const response = await fetch(`${APPS_SCRIPT_URL}?action=verify-otp`, {
+        const response = await fetch(TWILIO_VERIFY_OTP_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ phoneNumber, otp })
         });
 
         const data = await response.json();
-        if (data.success) {
+        if (response.ok && data.success) { // Check both response.ok and data.success
           showMessageBox("OTP verified successfully! You can now fill out the form.", "success");
           enableFormFields();
           document.getElementById('verifyOtpButton').disabled = true;
           document.getElementById('sendOtpButton').disabled = true;
           document.getElementById('otpInput').disabled = true;
         } else {
-          showMessageBox(`OTP verification failed: ${data.message}`, "error");
+          showMessageBox(`OTP verification failed: ${data.message || 'Invalid OTP'}`, "error");
           document.getElementById('otpInput').value = ''; // Clear OTP field
           document.getElementById('verifyOtpButton').disabled = false; // Allow retry
         }
@@ -456,8 +456,6 @@
       event.preventDefault();
 
       // Ensure OTP is verified before submission
-      // Check if the verifyOtpButton is still enabled (meaning OTP not verified)
-      // Or if otpInput is not disabled (meaning OTP not verified)
       if (!document.getElementById('verifyOtpButton').disabled || !document.getElementById('otpInput').disabled) {
           showMessageBox('Please verify your mobile number with OTP before submitting.', 'error');
           return;
