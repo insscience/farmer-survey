@@ -216,12 +216,12 @@
         // --- Firebase Configuration ---
         // IMPORTANT: PASTE YOUR FIREBASE CONFIG OBJECT HERE
         const firebaseConfig = {
-          apiKey: "YOUR_API_KEY", // Replace with your actual API Key
-          authDomain: "YOUR_AUTH_DOMAIN", // Replace with your actual Auth Domain
-          projectId: "YOUR_PROJECT_ID", // Replace with your actual Project ID
-          storageBucket: "YOUR_STORAGE_BUCKET", // Replace with your actual Storage Bucket
-          messagingSenderId: "YOUR_MESSAGING_SENDER_ID", // Replace with your actual Messaging Sender ID
-          appId: "YOUR_APP_ID" // Replace with your actual App ID
+          apiKey: "AIzaSyAhQsW0tcwPbeBFLCrqXb0BJ2K8ESP4DkA",
+          authDomain: "farmersurveyauth.firebaseapp.com",
+          projectId: "farmersurveyauth",
+          storageBucket: "farmersurveyauth.firebasestorage.app",
+          messagingSenderId: "1084995228172",
+          appId: "1:1084995228172:web:19605decd7ead9055cd429"
         };
 
         // Initialize Firebase
@@ -504,11 +504,11 @@
           if (agreedToPremium3Percent) {
             payload['agreedToPremium3Percent'] = agreedToPremium3Percent.value;
           }
-          const agreedToPremium2Percent = document.querySelector('input[name="agreedToPremium2Percent"]:checked');
+          const agreedToPremium2Percent = document.querySelector('input[name="agreedToPremium2Percent']:checked');
           if (agreedToPremium2Percent) {
             payload['agreedToPremium2Percent'] = agreedToPremium2Percent.value; 
           }
-          const agreedToPremium1Percent = document.querySelector('input[name="agreedToPremium1Percent"]:checked');
+          const agreedToPremium1Percent = document.querySelector('input[name="agreedToPremium1Percent']:checked');
           if (agreedToPremium1Percent) { 
             payload['agreedToPremium1Percent'] = agreedToPremium1Percent.value;
           }
