@@ -11,10 +11,7 @@
         body {
           font-family: 'Inter', sans-serif;
         }
-        /* Added CSS for visible radio button selection */
-        input[type="radio"]:checked {
-          accent-color: #00796b; /* A shade of teal that matches your theme */
-        }
+        /* The accent-color rule for radio buttons is removed in this version */
       </style>
     </head>
     <body class="bg-gradient-to-r from-emerald-50 to-white flex items-center justify-center min-h-screen p-4">
@@ -508,7 +505,7 @@
           if (agreedToPremium3Percent) {
             payload['agreedToPremium3Percent'] = agreedToPremium3Percent.value;
           }
-          const agreedToPremium2Percent = document.querySelector('input[name="agreedToPremium2Percent']:checked');
+          const agreedToPremium2Percent = document.querySelector('input[name="agreedToPremium2Percent"]:checked');
           if (agreedToPremium2Percent) {
             payload['agreedToPremium2Percent'] = agreedToPremium2Percent.value; 
           }
@@ -516,7 +513,7 @@
           if (agreedToPremium1Percent) { 
             payload['agreedToPremium1Percent'] = agreedToPremium1Percent.value;
           }
-          const whiteSpotDisease = document.querySelector('input[name="whiteSpotDisease']:checked');
+          const whiteSpotDisease = document.querySelector('input[name="whiteSpotDisease"]:checked');
           if (whiteSpotDisease) {
             payload['whiteSpotDisease'] = whiteSpotDisease.value;
           }
