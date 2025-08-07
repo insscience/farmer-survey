@@ -11,7 +11,10 @@
         body {
           font-family: 'Inter', sans-serif;
         }
-        /* The accent-color rule for radio buttons is removed in this version */
+        /* ADDED: This CSS rule ensures radio buttons have a visible color when selected */
+        input[type="radio"] {
+            accent-color: #0d9488; /* A shade of teal to match the form theme */
+        }
       </style>
     </head>
     <body class="bg-gradient-to-r from-emerald-50 to-white flex items-center justify-center min-h-screen p-4">
@@ -324,30 +327,35 @@
           }
         }
 
-        // Toggles visibility of premium sections
+        // UPDATED: Toggles visibility of premium sections based on selections
         function togglePremiumSections() {
             const agreedToPremium3Percent = document.querySelector('input[name="agreedToPremium3Percent"]:checked')?.value;
             const agreedToPremium2Percent = document.querySelector('input[name="agreedToPremium2Percent"]:checked')?.value;
             
             const premium2PercentSection = document.getElementById('premium2PercentSection');
             const premium1PercentSection = document.getElementById('premium1PercentSection');
-
-            // Reset visibility and disabled state for all premium sections first
+            
+            // Start by hiding and disabling all lower sections
             premium2PercentSection.classList.add('hidden');
             premium1PercentSection.classList.add('hidden');
-            premium2PercentSection.querySelectorAll('input, select, textarea, button').forEach(el => el.disabled = true);
-            premium1PercentSection.querySelectorAll('input, select, textarea, button').forEach(el => el.disabled = true);
-            document.querySelectorAll('input[name="agreedToPremium2Percent"]').forEach(radio => radio.checked = false);
-            document.querySelectorAll('input[name="agreedToPremium1Percent"]').forEach(radio => radio.checked = false);
+            premium2PercentSection.querySelectorAll('input').forEach(el => {
+                el.disabled = true;
+                el.checked = false; // Uncheck to prevent incorrect data
+            });
+            premium1PercentSection.querySelectorAll('input').forEach(el => {
+                el.disabled = true;
+                el.checked = false; // Uncheck to prevent incorrect data
+            });
 
-
+            // Show the 2% section only if 'No' is selected for 3%
             if (agreedToPremium3Percent === 'No') {
                 premium2PercentSection.classList.remove('hidden');
-                premium2PercentSection.querySelectorAll('input, select, textarea, button').forEach(el => el.disabled = false);
+                premium2PercentSection.querySelectorAll('input').forEach(el => el.disabled = false);
 
+                // Show the 1% section only if 'No' is also selected for 2%
                 if (agreedToPremium2Percent === 'No') {
                     premium1PercentSection.classList.remove('hidden');
-                    premium1PercentSection.querySelectorAll('input, select, textarea, button').forEach(el => el.disabled = false);
+                    premium1PercentSection.querySelectorAll('input').forEach(el => el.disabled = false);
                 }
             }
         }
@@ -475,7 +483,7 @@
           document.getElementById('submitButton').disabled = false;
         }
 
-        // Function to handle form submission
+        // UPDATED: Function to handle form submission with improved data collection and error handling
         document.getElementById('surveyForm').addEventListener('submit', async function(event) {
           event.preventDefault();
 
@@ -494,7 +502,8 @@
           for (const [key, value] of formData.entries()) {
               payload[key] = value;
           }
-
+          
+          // MODIFIED: Ensure hidden and radio button values are correctly captured.
           payload['pondAreaHectares'] = document.getElementById('pondAreaHectares').value;
           payload['totalCoverageForSeed'] = document.getElementById('totalCoverageForSeed').value;
           payload['calculatedPremium3Percent'] = document.getElementById('calculatedPremium3Percent').value;
@@ -516,6 +525,37 @@
           const whiteSpotDisease = document.querySelector('input[name="whiteSpotDisease"]:checked');
           if (whiteSpotDisease) {
             payload['whiteSpotDisease'] = whiteSpotDisease.value;
+          }
+          
+          // ADDED: Logic to ensure at least one premium option is chosen if applicable
+          if (agreedToPremium3Percent && agreedToPremium3Percent.value === 'Yes') {
+              // The form can be submitted as a premium option is selected
+          } else if (agreedToPremium2Percent && agreedToPremium2Percent.value === 'Yes') {
+              // The form can be submitted
+          } else if (agreedToPremium1Percent && agreedToPremium1Percent.value === 'Yes') {
+              // The form can be submitted
+          } else if (agreedToPremium3Percent && agreedToPremium3Percent.value === 'No' &&
+              agreedToPremium2Percent && agreedToPremium2Percent.value === 'No' &&
+              agreedToPremium1Percent && agreedToPremium1Percent.value === 'No') {
+              showMessageBox('You must agree to at least one premium option to submit the form.', 'error');
+              submitButton.disabled = false;
+              submitButton.textContent = 'Submit';
+              return;
+          } else if (!agreedToPremium3Percent) {
+              showMessageBox('Please select an option for the 3% premium.', 'error');
+              submitButton.disabled = false;
+              submitButton.textContent = 'Submit';
+              return;
+          } else if (agreedToPremium3Percent.value === 'No' && !agreedToPremium2Percent) {
+              showMessageBox('Please select an option for the 2% premium.', 'error');
+              submitButton.disabled = false;
+              submitButton.textContent = 'Submit';
+              return;
+          } else if (agreedToPremium2Percent.value === 'No' && !agreedToPremium1Percent) {
+              showMessageBox('Please select an option for the 1% premium.', 'error');
+              submitButton.disabled = false;
+              submitButton.textContent = 'Submit';
+              return;
           }
 
           try {
@@ -555,10 +595,11 @@
               }
           } catch (error) {
               console.error('Error:', error);
-              showMessageBox('There was an error submitting your data. Please try again.', 'error');
+              // MODIFIED: Show a more specific error message for CORS
+              showMessageBox('Submission failed. Please ensure your Google Apps Script is configured for CORS.', 'error');
           } finally {
               submitButton.disabled = false;
-              submitButton.textContent = 'Submit Data';
+              submitButton.textContent = 'Submit';
           }
         });
 
@@ -579,6 +620,7 @@
             togglePremiumSections();
           });
 
+          // MODIFIED: Added event listeners to all radio buttons to ensure togglePremiumSections runs correctly
           document.querySelectorAll('input[name="agreedToPremium3Percent"]').forEach(radio => {
               radio.addEventListener('change', togglePremiumSections);
           });
