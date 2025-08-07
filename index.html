@@ -43,7 +43,7 @@
     <fieldset class="border border-gray-300 p-4 rounded-lg space-y-4">
       <legend class="text-lg font-semibold text-gray-700 px-2">OTP Authentication</legend>
       <div class="flex flex-col md:flex-row items-center gap-4">
-        <input type="tel" id="phoneNumber" placeholder="Enter phone number with country code (e.g., +91...)"
+        <input type="text" id="phoneNumber" placeholder="Enter phone number with country code (e.g., +91...)"
           class="flex-grow p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
         <button id="sendOtpButton"
           class="w-full md:w-auto px-6 py-3 bg-teal-600 text-white font-semibold rounded-lg shadow-md hover:bg-teal-700 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
@@ -339,9 +339,14 @@
     // Function to handle the send OTP button click (Firebase)
     async function sendOTP() {
       const phoneNumberInput = document.getElementById("phoneNumber");
-      const phoneNumber = phoneNumberInput.value;
+      let phoneNumber = phoneNumberInput.value.trim();
       const sendOtpButton = document.getElementById("sendOtpButton");
 
+      // Check if the phone number already has a '+' and country code, if not, prepend '+91'
+      if (!phoneNumber.startsWith('+')) {
+        phoneNumber = `+91${phoneNumber}`;
+      }
+      
       if (!phoneNumber) {
         showMessageBox("Please enter a valid phone number.", "error");
         return;
