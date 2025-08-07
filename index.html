@@ -1,636 +1,512 @@
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Farmer Survey Form</title>
-      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-      <script src="https://cdn.tailwindcss.com"></script>
-      <style>
-        body {
-          font-family: 'Inter', sans-serif;
-        }
-        /* ADDED: This CSS rule ensures radio buttons have a visible color when selected */
-        input[type="radio"] {
-            accent-color: #0d9488; /* A shade of teal to match the form theme */
-        }
-      </style>
-    </head>
-    <body class="bg-gradient-to-r from-emerald-50 to-white flex items-center justify-center min-h-screen p-4">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Farmer Survey Form</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    input[type="radio"] {
+        accent-color: #0d9488;
+    }
+    #recaptcha-container {
+        display: block !important;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-r from-emerald-50 to-white flex items-center justify-center min-h-screen p-4">
 
-      <!-- Message Box Container -->
-      <div id="messageBox" class="fixed top-5 right-5 z-50 transform translate-x-full transition-transform duration-500 ease-in-out">
-        <div class="bg-gray-800 text-white px-6 py-4 rounded-lg shadow-xl flex items-center space-x-3" role="alert">
-          <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span id="messageText"></span>
-          <button onclick="hideMessageBox()" class="ml-auto focus:outline-none">
-            <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+  <!-- Message Box Container -->
+  <div id="messageBox" class="fixed top-5 right-5 z-50 transform translate-x-full transition-transform duration-500 ease-in-out">
+    <div class="bg-gray-800 text-white px-6 py-4 rounded-lg shadow-xl flex items-center space-x-3" role="alert">
+      <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span id="messageText"></span>
+      <button onclick="hideMessageBox()" class="ml-auto focus:outline-none">
+        <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="w-full max-w-2xl bg-white p-6 md:p-10 rounded-xl shadow-lg border border-gray-100 space-y-8">
+    <h2 class="text-2xl md:text-3xl font-bold text-center text-teal-600">Farmer Survey Form</h2>
+
+    <!-- OTP Section -->
+    <fieldset class="border border-gray-300 p-4 rounded-lg space-y-4">
+      <legend class="text-lg font-semibold text-gray-700 px-2">OTP Authentication</legend>
+      <div class="flex flex-col md:flex-row items-center gap-4">
+        <input type="tel" id="phoneNumber" placeholder="Enter phone number with country code (e.g., +91...)"
+          class="flex-grow p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+        <button id="sendOtpButton"
+          class="w-full md:w-auto px-6 py-3 bg-teal-600 text-white font-semibold rounded-lg shadow-md hover:bg-teal-700 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+          Send OTP
+        </button>
+      </div>
+      
+      <!-- reCAPTCHA container for Firebase -->
+      <div id="recaptcha-container" class="mt-4"></div>
+
+      <div class="flex flex-col md:flex-row items-center gap-4 mt-4">
+        <input type="text" id="otpInput" placeholder="Enter OTP" disabled
+          class="flex-grow p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+        <button id="verifyOtpButton" disabled
+          class="w-full md:w-auto px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg shadow-md hover:bg-emerald-700 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+          Verify OTP
+        </button>
+      </div>
+    </fieldset>
+
+    <form id="surveyForm" class="space-y-6">
+      <!-- Personal Details Section -->
+      <fieldset class="border border-gray-300 p-4 rounded-lg space-y-4">
+        <legend class="text-lg font-semibold text-gray-700 px-2">Personal Details</legend>
+        <div>
+          <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+          <input type="text" id="name" name="name" required disabled
+            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
         </div>
-      </div>
+        <div>
+          <label for="fatherName" class="block text-sm font-medium text-gray-700 mb-1">Father's Name</label>
+          <input type="text" id="fatherName" name="fatherName" required disabled
+            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+        </div>
+      </fieldset>
 
-      <div class="w-full max-w-2xl bg-white p-6 md:p-10 rounded-xl shadow-lg border border-gray-100 space-y-8">
-        <h2 class="text-2xl md:text-3xl font-bold text-center text-teal-600">Farmer Survey Form</h2>
-
-        <!-- OTP Section -->
-        <fieldset class="border border-gray-300 p-4 rounded-lg space-y-4">
-          <legend class="text-lg font-semibold text-gray-700 px-2">OTP Authentication</legend>
-          <div class="flex flex-col md:flex-row items-center gap-4">
-            <input type="tel" id="phoneNumber" placeholder="Enter 10-digit phone number"
-              class="flex-grow p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
-            <button id="sendOtpButton"
-              class="w-full md:w-auto px-6 py-3 bg-teal-600 text-white font-semibold rounded-lg shadow-md hover:bg-teal-700 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
-              Send OTP
+      <!-- Pond Details Section -->
+      <fieldset class="border border-gray-300 p-4 rounded-lg space-y-4">
+        <legend class="text-lg font-semibold text-gray-700 px-2">Pond Details</legend>
+        <div>
+          <label for="pondLocation" class="block text-sm font-medium text-gray-700 mb-1">Pond Location</label>
+          <div class="flex gap-2">
+            <input type="text" id="pondLocation" name="pondLocation" required disabled
+              class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+            <button type="button" id="useLocationButton"
+              class="px-4 py-2 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+              <i class="fa-solid fa-location-arrow"></i> Use My Location
             </button>
           </div>
-
-          <div class="flex flex-col md:flex-row items-center gap-4 mt-4">
-            <input type="text" id="otpInput" placeholder="Enter OTP" disabled
-              class="flex-grow p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
-            <button id="verifyOtpButton" disabled
-              class="w-full md:w-auto px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg shadow-md hover:bg-emerald-700 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
-              Verify OTP
-            </button>
+        </div>
+        <div>
+          <label for="pondAreaSqMeters" class="block text-sm font-medium text-gray-700 mb-1">Area of Pond (in square meters)</label>
+          <input type="number" id="pondAreaSqMeters" name="pondAreaSqMeters" min="0" step="0.01" required disabled
+            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+        </div>
+        <div>
+          <label for="pondAreaHectares" class="block text-sm font-medium text-gray-700 mb-1">Area of Pond (in hectares)</label>
+          <input type="text" id="pondAreaHectares" name="pondAreaHectares" readonly disabled
+            class="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500">
+        </div>
+        <div>
+          <label for="shrimpToilet" class="block text-sm font-medium text-gray-700 mb-1">Shrimp Toilet Available?</label>
+          <select id="shrimpToilet" name="shrimpToilet" required disabled
+            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+            <option value="">Select</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+          </select>
+        </div>
+        <div>
+          <label for="cultureFrequency" class="block text-sm font-medium text-gray-700 mb-1">Frequency of Culture</label>
+          <input type="text" id="cultureFrequency" name="cultureFrequency" required disabled
+            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+        </div>
+        <div>
+          <label for="feedingFrequency" class="block text-sm font-medium text-gray-700 mb-1">Feeding Frequency</label>
+          <input type="text" id="feedingFrequency" name="feedingFrequency" required disabled
+            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+        </div>
+        <div>
+          <label for="medicineUsed" class="block text-sm font-medium text-gray-700 mb-1">Medicine Used</label>
+          <input type="text" id="medicineUsed" name="medicineUsed" disabled
+            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Did you previously experience white spot disease?</label>
+          <div class="flex items-center space-x-4">
+            <label class="flex items-center cursor-pointer">
+              <input type="radio" name="whiteSpotDisease" value="Yes" required disabled
+                class="form-radio text-teal-600 h-5 w-5">
+              <span class="ml-2 text-gray-700">Yes</span>
+            </label>
+            <label class="flex items-center cursor-pointer">
+              <input type="radio" name="whiteSpotDisease" value="No" disabled
+                class="form-radio text-teal-600 h-5 w-5">
+              <span class="ml-2 text-gray-700">No</span>
+            </label>
           </div>
-          <!-- reCAPTCHA container for Firebase -->
-          <div id="recaptcha-container" class="mt-4"></div>
-        </fieldset>
+        </div>
+      </fieldset>
 
-        <form id="surveyForm" class="space-y-6">
-          <!-- Personal Details Section -->
-          <fieldset class="border border-gray-300 p-4 rounded-lg space-y-4">
-            <legend class="text-lg font-semibold text-gray-700 px-2">Personal Details</legend>
-            <div>
-              <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-              <input type="text" id="name" name="name" required disabled
-                class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
-            </div>
-            <div>
-              <label for="fatherName" class="block text-sm font-medium text-gray-700 mb-1">Father's Name</label>
-              <input type="text" id="fatherName" name="fatherName" required disabled
-                class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
-            </div>
-          </fieldset>
-
-          <!-- Pond Details Section -->
-          <fieldset class="border border-gray-300 p-4 rounded-lg space-y-4">
-            <legend class="text-lg font-semibold text-gray-700 px-2">Pond Details</legend>
-            <div>
-              <label for="pondLocation" class="block text-sm font-medium text-gray-700 mb-1">Pond Location</label>
-              <div class="flex gap-2">
-                <input type="text" id="pondLocation" name="pondLocation" required disabled
-                  class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
-                <button type="button" id="useLocationButton"
-                  class="px-4 py-2 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
-                  <i class="fa-solid fa-location-arrow"></i> Use My Location
-                </button>
-              </div>
-            </div>
-            <div>
-              <label for="pondAreaSqMeters" class="block text-sm font-medium text-gray-700 mb-1">Area of Pond (in square meters)</label>
-              <input type="number" id="pondAreaSqMeters" name="pondAreaSqMeters" min="0" step="0.01" required disabled
-                class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
-            </div>
-            <div>
-              <label for="pondAreaHectares" class="block text-sm font-medium text-gray-700 mb-1">Area of Pond (in hectares)</label>
-              <input type="text" id="pondAreaHectares" name="pondAreaHectares" readonly disabled
-                class="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500">
-            </div>
-            <div>
-              <label for="shrimpToilet" class="block text-sm font-medium text-gray-700 mb-1">Shrimp Toilet Available?</label>
-              <select id="shrimpToilet" name="shrimpToilet" required disabled
-                class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
-                <option value="">Select</option>
-                <option value="Yes">Yes</option>
-                <option value="No">No</option>
-              </select>
-            </div>
-            <div>
-              <label for="cultureFrequency" class="block text-sm font-medium text-gray-700 mb-1">Frequency of Culture</label>
-              <input type="text" id="cultureFrequency" name="cultureFrequency" required disabled
-                class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
-            </div>
-            <div>
-              <label for="feedingFrequency" class="block text-sm font-medium text-gray-700 mb-1">Feeding Frequency</label>
-              <input type="text" id="feedingFrequency" name="feedingFrequency" required disabled
-                class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
-            </div>
-            <div>
-              <label for="medicineUsed" class="block text-sm font-medium text-gray-700 mb-1">Medicine Used</label>
-              <input type="text" id="medicineUsed" name="medicineUsed" disabled
-                class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Did you previously experience white spot disease?</label>
-              <div class="flex items-center space-x-4">
-                <label class="flex items-center cursor-pointer">
-                  <input type="radio" name="whiteSpotDisease" value="Yes" required disabled
-                    class="form-radio text-teal-600 h-5 w-5">
-                  <span class="ml-2 text-gray-700">Yes</span>
-                </label>
-                <label class="flex items-center cursor-pointer">
-                  <input type="radio" name="whiteSpotDisease" value="No" disabled
-                    class="form-radio text-teal-600 h-5 w-5">
-                  <span class="ml-2 text-gray-700">No</span>
-                </label>
-              </div>
-            </div>
-          </fieldset>
-
-          <!-- Premium Calculation Section -->
-          <fieldset class="border border-gray-300 p-4 rounded-lg space-y-4">
-            <legend class="text-lg font-semibold text-gray-700 px-2">Premium Calculation</legend>
-            <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
-              <p class="font-bold text-yellow-800">Insured value for crop loss: <span id="totalCoverageForSeedDisplay">₹ 0</span></p>
-              <p class="text-sm text-gray-600">Premium required for coverage. (কভারেজের জন্য প্রিমিয়াম প্রয়োজন।)</p>
-              <input type="hidden" name="totalCoverageForSeed" id="totalCoverageForSeed">
-            </div>
-            
-            <!-- 3% Premium Section -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Agree to 3% premium? আপনি কি 3% প্রিমিয়ামে সম্মত? <span id="calculatedPremium3PercentDisplay" class="font-bold text-blue-800">₹ 0</span></label>
-              <div class="flex items-center space-x-4">
-                <label class="flex items-center cursor-pointer">
-                  <input type="radio" name="agreedToPremium3Percent" value="Yes" required disabled
-                    class="form-radio text-teal-600 h-5 w-5">
-                  <span class="ml-2 text-gray-700">Yes</span>
-                </label>
-                <label class="flex items-center cursor-pointer">
-                  <input type="radio" name="agreedToPremium3Percent" value="No" disabled
-                    class="form-radio text-teal-600 h-5 w-5">
-                  <span class="ml-2 text-gray-700">No</span>
-                </label>
-              </div>
-              <input type="hidden" name="calculatedPremium3Percent" id="calculatedPremium3Percent">
-            </div>
-
-            <!-- 2% Premium Section - Conditionally displayed -->
-            <div id="premium2PercentSection" class="hidden border border-gray-200 p-4 rounded-lg space-y-4 transition-all duration-300">
-              <label class="block text-sm font-medium text-gray-700 mb-1">Agree to 2% premium? আপনি কি 2% প্রিমিয়ামে সম্মত? <span id="calculatedPremium2PercentDisplay" class="font-bold text-green-800">₹ 0</span></label>
-              <div class="flex items-center space-x-4">
-                <label class="flex items-center cursor-pointer">
-                  <input type="radio" name="agreedToPremium2Percent" value="Yes" disabled
-                    class="form-radio text-teal-600 h-5 w-5">
-                  <span class="ml-2 text-gray-700">Yes</span>
-                </label>
-                <label class="flex items-center cursor-pointer">
-                  <input type="radio" name="agreedToPremium2Percent" value="No" disabled
-                    class="form-radio text-teal-600 h-5 w-5">
-                  <span class="ml-2 text-gray-700">No</span>
-                </label>
-              </div>
-              <input type="hidden" name="calculatedPremium2Percent" id="calculatedPremium2Percent">
-            </div>
-
-            <!-- 1% Premium Section - Conditionally displayed -->
-            <div id="premium1PercentSection" class="hidden border border-gray-200 p-4 rounded-lg space-y-4 transition-all duration-300">
-              <label class="block text-sm font-medium text-gray-700 mb-1">Agree to 1% premium? আপনি কি 1% প্রিমিয়ামে সম্মত? <span id="calculatedPremium1PercentDisplay" class="font-bold text-red-800">₹ 0</span></label>
-              <div class="flex items-center space-x-4">
-                <label class="flex items-center cursor-pointer">
-                  <input type="radio" name="agreedToPremium1Percent" value="Yes" disabled
-                    class="form-radio text-teal-600 h-5 w-5">
-                  <span class="ml-2 text-gray-700">Yes</span>
-                </label>
-                <label class="flex items-center cursor-pointer">
-                  <input type="radio" name="agreedToPremium1Percent" value="No" disabled
-                    class="form-radio text-teal-600 h-5 w-5">
-                  <span class="ml-2 text-gray-700">No</span>
-                </label>
-              </div>
-              <input type="hidden" name="calculatedPremium1Percent" id="calculatedPremium1Percent">
-            </div>
-          </fieldset>
-
-          <button type="submit" id="submitButton" disabled
-            class="w-full px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-lg hover:bg-indigo-700 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
-            Submit
-          </button>
-        </form>
-      </div>
-
-      <!-- Firebase SDKs -->
-      <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-      <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-      <script>
-        // --- Firebase Configuration ---
-        // IMPORTANT: PASTE YOUR FIREBASE CONFIG OBJECT HERE
-        const firebaseConfig = {
-          apiKey: "AIzaSyAhQsW0tcwPbeBFLCrqXb0BJ2K8ESP4DkA",
-          authDomain: "farmersurveyauth.firebaseapp.com",
-          projectId: "farmersurveyauth",
-          storageBucket: "farmersurveyauth.firebasestorage.app",
-          messagingSenderId: "1084995228172",
-          appId: "1:1084995228172:web:19605decd7ead9055cd429"
-        };
-
-        // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        let confirmationResult; // To store the confirmation result for OTP verification
-
-        // --- Configuration for Google Apps Script (for form submission) ---
-        const formSubmitAppsScriptUrl = 'https://script.google.com/macros/s/AKfycbwg-tl62MC-bxfEbA6L1tgfx1O6Fmrug-lYj5Z8EjE8zlAHsLm9lqS994CjTubTt39U/exec';
-
-        // Constants for calculations
-        const SQUARE_METERS_PER_HECTARE = 10000;
-        const STANDARD_STOCKING_DENSITY_PER_SQM = 50; // 50 pieces per square meter
-        const PRICE_PER_PIECE = 0.70; // 0.70 INR per piece
-
-        // Message box functions
-        function showMessageBox(message, type = 'info') {
-          const messageBox = document.getElementById('messageBox');
-          const messageText = document.getElementById('messageText');
-          
-          messageText.textContent = message;
-          messageBox.className = "fixed top-5 right-5 z-50 transform translate-x-0 transition-transform duration-500 ease-in-out";
-
-          // Hide message box after 5 seconds
-          setTimeout(() => {
-            hideMessageBox();
-          }, 5000);
-        }
-
-        function hideMessageBox() {
-          const messageBox = document.getElementById('messageBox');
-          messageBox.className = "fixed top-5 right-5 z-50 transform translate-x-full transition-transform duration-500 ease-in-out";
-        }
-
-        // Function to calculate premium
-        function calculatePremiums() {
-          const pondAreaSqMetersInput = document.getElementById("pondAreaSqMeters");
-          const pondAreaHectaresInput = document.getElementById("pondAreaHectares");
-          const totalCoverageForSeedDisplay = document.getElementById("totalCoverageForSeedDisplay"); 
-          const calculatedPremium3PercentDisplay = document.getElementById("calculatedPremium3PercentDisplay");
-          const calculatedPremium2PercentDisplay = document.getElementById("calculatedPremium2PercentDisplay");
-          const calculatedPremium1PercentDisplay = document.getElementById("calculatedPremium1PercentDisplay");
-
-          const totalCoverageForSeedHidden = document.getElementById("totalCoverageForSeed"); 
-          const calculatedPremium3PercentHidden = document.getElementById("calculatedPremium3Percent");
-          const calculatedPremium2PercentHidden = document.getElementById("calculatedPremium2Percent");
-          const calculatedPremium1PercentHidden = document.getElementById("calculatedPremium1Percent");
-
-          const pondAreaSqMetersValue = pondAreaSqMetersInput.value;
-          const pondAreaSqMeters = parseFloat(pondAreaSqMetersValue);
-          
-          let pondAreaHectares = 0;
-          if (!isNaN(pondAreaSqMeters) && pondAreaSqMeters >= 0) {
-            pondAreaHectares = pondAreaSqMeters / SQUARE_METERS_PER_HECTARE;
-            pondAreaHectaresInput.value = pondAreaHectares.toFixed(4); // Display with 4 decimal places
-          } else {
-            pondAreaHectaresInput.value = ''; 
-          }
-
-          let calculatedSumInsured = 0;
-          if (!isNaN(pondAreaHectares) && pondAreaHectares > 0) {
-            calculatedSumInsured = pondAreaHectares * STANDARD_STOCKING_DENSITY_PER_SQM * SQUARE_METERS_PER_HECTARE * PRICE_PER_PIECE;
-            const formattedSumInsured = calculatedSumInsured.toLocaleString('en-IN', { style: 'currency', currency: 'INR' });
-            totalCoverageForSeedDisplay.innerHTML = `<span class="font-bold text-yellow-800">${formattedSumInsured}</span>`;
-            totalCoverageForSeedHidden.value = calculatedSumInsured.toFixed(2);
-          } else {
-            totalCoverageForSeedDisplay.innerHTML = '₹ 0';
-            totalCoverageForSeedHidden.value = '';
-          }
-
-          let calculatedPremium3Percent = 0;
-          if (!isNaN(calculatedSumInsured) && calculatedSumInsured > 0) {
-            calculatedPremium3Percent = calculatedSumInsured * 0.03;
-            calculatedPremium3PercentDisplay.innerHTML = `${calculatedPremium3Percent.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}`;
-            calculatedPremium3PercentHidden.value = calculatedPremium3Percent.toFixed(2);
-          } else {
-            calculatedPremium3PercentDisplay.innerHTML = '₹ 0';
-            calculatedPremium3PercentHidden.value = '';
-          }
-
-          let calculatedPremium2Percent = 0;
-          if (!isNaN(calculatedSumInsured) && calculatedSumInsured > 0) {
-            calculatedPremium2Percent = calculatedSumInsured * 0.02;
-            calculatedPremium2PercentDisplay.innerHTML = `${calculatedPremium2Percent.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}`;
-            calculatedPremium2PercentHidden.value = calculatedPremium2Percent.toFixed(2);
-          } else {
-            calculatedPremium2PercentDisplay.innerHTML = '₹ 0';
-            calculatedPremium2PercentHidden.value = '';
-          }
-
-          let calculatedPremium1Percent = 0;
-          if (!isNaN(calculatedSumInsured) && calculatedSumInsured > 0) {
-            calculatedPremium1Percent = calculatedSumInsured * 0.01;
-            calculatedPremium1PercentDisplay.innerHTML = `${calculatedPremium1Percent.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}`;
-            calculatedPremium1PercentHidden.value = calculatedPremium1Percent.toFixed(2);
-          } else {
-            calculatedPremium1PercentDisplay.innerHTML = '₹ 0';
-            calculatedPremium1PercentHidden.value = '';
-          }
-        }
-
-        // UPDATED: Toggles visibility of premium sections based on selections
-        function togglePremiumSections() {
-            const agreedToPremium3Percent = document.querySelector('input[name="agreedToPremium3Percent"]:checked')?.value;
-            const agreedToPremium2Percent = document.querySelector('input[name="agreedToPremium2Percent"]:checked')?.value;
-            
-            const premium2PercentSection = document.getElementById('premium2PercentSection');
-            const premium1PercentSection = document.getElementById('premium1PercentSection');
-            
-            // Start by hiding and disabling all lower sections
-            premium2PercentSection.classList.add('hidden');
-            premium1PercentSection.classList.add('hidden');
-            premium2PercentSection.querySelectorAll('input').forEach(el => {
-                el.disabled = true;
-                el.checked = false; // Uncheck to prevent incorrect data
-            });
-            premium1PercentSection.querySelectorAll('input').forEach(el => {
-                el.disabled = true;
-                el.checked = false; // Uncheck to prevent incorrect data
-            });
-
-            // Show the 2% section only if 'No' is selected for 3%
-            if (agreedToPremium3Percent === 'No') {
-                premium2PercentSection.classList.remove('hidden');
-                premium2PercentSection.querySelectorAll('input').forEach(el => el.disabled = false);
-
-                // Show the 1% section only if 'No' is also selected for 2%
-                if (agreedToPremium2Percent === 'No') {
-                    premium1PercentSection.classList.remove('hidden');
-                    premium1PercentSection.querySelectorAll('input').forEach(el => el.disabled = false);
-                }
-            }
-        }
-
-        // Function to fetch and fill location (simulated)
-        function fillLocation(elementId) {
-          if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(position => {
-              const lat = position.coords.latitude;
-              const lon = position.coords.longitude;
-              showMessageBox('Location filled successfully!', 'success');
-              document.getElementById(elementId).value = `Lat: ${lat.toFixed(4)}, Lon: ${lon.toFixed(4)}`;
-            }, error => {
-              showMessageBox('Error getting location. Please enter manually.', 'error');
-            });
-          } else {
-            showMessageBox('Geolocation is not supported by this browser.', 'error');
-          }
-        }
-
-        // --- Firebase OTP Functions ---
-
-        // Initialize reCAPTCHA verifier
-        let appVerifier;
-        document.addEventListener('DOMContentLoaded', () => {
-          // Existing DOMContentLoaded logic...
-          
-          // Initialize reCAPTCHA verifier after other DOM elements are ready
-          appVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
-            'size': 'invisible', // Can be 'normal' for visible reCAPTCHA
-            'callback': (response) => {
-              // reCAPTCHA solved, allow user to click send OTP
-              // This callback is optional if size is 'invisible'
-            },
-            'expired-callback': () => {
-              // reCAPTCHA expired. Reset and re-render if necessary.
-              showMessageBox('reCAPTCHA expired. Please try again.', 'error');
-            }
-          });
-          appVerifier.render().then(function (widgetId) {
-            // reCAPTCHA widget rendered
-          });
-        });
-
-
-        // Function to send OTP via Firebase
-        async function sendOTP() {
-          let phoneNumber = document.getElementById('phoneNumber').value.trim();
-
-          // If it's a 10-digit number without a leading '+', prepend '+91'
-          if (/^\d{10}$/.test(phoneNumber)) {
-              phoneNumber = `+91${phoneNumber}`;
-          } else if (!phoneNumber.startsWith('+')) {
-              showMessageBox("Please enter a valid 10-digit phone number, or include the country code (e.g., +91).", "error");
-              return;
-          }
-
-          // Basic validation for E.164 format and length
-          if (!/^\+\d{10,15}$/.test(phoneNumber)) {
-              showMessageBox("Please enter a valid phone number, including country code (e.g., +919876543210).", "error");
-              return;
-          }
-
-          document.getElementById('sendOtpButton').disabled = true;
-          document.getElementById('phoneNumber').disabled = true;
-
-          try {
-            showMessageBox("Sending OTP...", "info");
-            confirmationResult = await auth.signInWithPhoneNumber(phoneNumber, appVerifier);
-            showMessageBox("OTP sent successfully! Please check your phone.", "success");
-            document.getElementById('otpInput').disabled = false;
-            document.getElementById('verifyOtpButton').disabled = false;
-          } catch (error) {
-            console.error("Error sending OTP (Firebase):", error);
-            showMessageBox(`Failed to send OTP: ${error.message}`, "error");
-            document.getElementById('phoneNumber').disabled = false;
-            // Reset reCAPTCHA if it was visible
-            if (appVerifier && appVerifier.reset) {
-              appVerifier.reset();
-            }
-          } finally {
-            document.getElementById('sendOtpButton').disabled = false;
-          }
-        }
-
-        // Function to verify OTP via Firebase
-        async function verifyOTP() {
-          const otp = document.getElementById('otpInput').value;
-
-          if (!otp) {
-            showMessageBox("Please enter the OTP.", "error");
-            return;
-          }
-
-          document.getElementById('verifyOtpButton').disabled = true;
-
-          try {
-            showMessageBox("Verifying OTP...", "info");
-            await confirmationResult.confirm(otp);
-            showMessageBox("OTP verified successfully! You can now fill out the form.", "success");
-            enableFormFields();
-            document.getElementById('verifyOtpButton').disabled = true;
-            document.getElementById('sendOtpButton').disabled = true;
-            document.getElementById('otpInput').disabled = true;
-          } catch (error) {
-            console.error("Error verifying OTP (Firebase):", error);
-            showMessageBox(`OTP verification failed: ${error.message}`, "error");
-            document.getElementById('otpInput').value = '';
-            document.getElementById('verifyOtpButton').disabled = false;
-            // Reset reCAPTCHA if it was visible
-            if (appVerifier && appVerifier.reset) {
-              appVerifier.reset();
-            }
-          }
-        }
+      <!-- Premium Calculation Section -->
+      <fieldset class="border border-gray-300 p-4 rounded-lg space-y-4">
+        <legend class="text-lg font-semibold text-gray-700 px-2">Premium Calculation</legend>
+        <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+          <p class="font-bold text-yellow-800">Insured value for crop loss: <span id="totalCoverageForSeedDisplay">₹ 0</span></p>
+          <p class="text-sm text-gray-600">Premium required for coverage. (কভারেজের জন্য প্রিমিয়াম প্রয়োজন।)</p>
+          <input type="hidden" name="totalCoverageForSeed" id="totalCoverageForSeed">
+        </div>
         
-        // Function to enable all form fields
-        function enableFormFields() {
-          const form = document.getElementById('surveyForm');
-          form.querySelectorAll('input, button, select').forEach(element => {
-            if (element.id !== 'phoneNumber' && element.id !== 'sendOtpButton' && element.id !== 'otpInput' && element.id !== 'verifyOtpButton') {
-              element.disabled = false;
-            }
-          });
-          document.getElementById('submitButton').disabled = false;
+        <!-- 3% Premium Section -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Agree to 3% premium? আপনি কি 3% প্রিমিয়ামে সম্মত? <span id="calculatedPremium3PercentDisplay" class="font-bold text-blue-800">₹ 0</span></label>
+          <div class="flex items-center space-x-4">
+            <label class="flex items-center cursor-pointer">
+              <input type="radio" name="agreedToPremium3Percent" value="Yes" required disabled
+                class="form-radio text-teal-600 h-5 w-5">
+              <span class="ml-2 text-gray-700">Yes</span>
+            </label>
+            <label class="flex items-center cursor-pointer">
+              <input type="radio" name="agreedToPremium3Percent" value="No" disabled
+                class="form-radio text-teal-600 h-5 w-5">
+              <span class="ml-2 text-gray-700">No</span>
+            </label>
+          </div>
+          <input type="hidden" name="calculatedPremium3Percent" id="calculatedPremium3Percent">
+        </div>
+
+        <!-- 2% Premium Section - Conditionally displayed -->
+        <div id="premium2PercentSection" class="hidden border border-gray-200 p-4 rounded-lg space-y-4 transition-all duration-300">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Agree to 2% premium? আপনি কি 2% প্রিমিয়ামে সম্মত? <span id="calculatedPremium2PercentDisplay" class="font-bold text-green-800">₹ 0</span></label>
+          <div class="flex items-center space-x-4">
+            <label class="flex items-center cursor-pointer">
+              <input type="radio" name="agreedToPremium2Percent" value="Yes" disabled
+                class="form-radio text-teal-600 h-5 w-5">
+              <span class="ml-2 text-gray-700">Yes</span>
+            </label>
+            <label class="flex items-center cursor-pointer">
+              <input type="radio" name="agreedToPremium2Percent" value="No" disabled
+                class="form-radio text-teal-600 h-5 w-5">
+              <span class="ml-2 text-gray-700">No</span>
+            </label>
+          </div>
+          <input type="hidden" name="calculatedPremium2Percent" id="calculatedPremium2Percent">
+        </div>
+
+        <!-- 1% Premium Section - Conditionally displayed -->
+        <div id="premium1PercentSection" class="hidden border border-gray-200 p-4 rounded-lg space-y-4 transition-all duration-300">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Agree to 1% premium? আপনি কি 1% প্রিমিয়ামে সম্মত? <span id="calculatedPremium1PercentDisplay" class="font-bold text-red-800">₹ 0</span></label>
+          <div class="flex items-center space-x-4">
+            <label class="flex items-center cursor-pointer">
+              <input type="radio" name="agreedToPremium1Percent" value="Yes" disabled
+                class="form-radio text-teal-600 h-5 w-5">
+              <span class="ml-2 text-gray-700">Yes</span>
+            </label>
+            <label class="flex items-center cursor-pointer">
+              <input type="radio" name="agreedToPremium1Percent" value="No" disabled
+                class="form-radio text-teal-600 h-5 w-5">
+              <span class="ml-2 text-gray-700">No</span>
+            </label>
+          </div>
+          <input type="hidden" name="calculatedPremium1Percent" id="calculatedPremium1Percent">
+        </div>
+      </fieldset>
+
+      <button type="submit" id="submitButton" disabled
+        class="w-full px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-lg hover:bg-indigo-700 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+        Submit
+      </button>
+    </form>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script>
+    // --- Firebase Configuration ---
+    // IMPORTANT: PASTE YOUR FIREBASE CONFIG OBJECT HERE
+    const firebaseConfig = {
+      apiKey: "AIzaSyAhQsW0tcwPbeBFLCrqXb0BJ2K8ESP4DkA",
+      authDomain: "farmersurveyauth.firebaseapp.com",
+      projectId: "farmersurveyauth",
+      storageBucket: "farmersurveyauth.firebasestorage.app",
+      messagingSenderId: "1084995228172",
+      appId: "1:1084995228172:web:19605decd7ead9055cd429"
+    };
+
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    let confirmationResult; // To store the confirmation result for OTP verification
+
+    // --- Configuration for Google Apps Script (for form submission) ---
+    const formSubmitAppsScriptUrl = 'https://script.google.com/macros/s/AKfycbwg-tl62MC-bxfEbA6L1tgfx1O6Fmrug-lYj5Z8EjE8zlAHsLm9lqS994CjTubTt39U/exec';
+
+    // Constants for calculations
+    const SQUARE_METERS_PER_HECTARE = 10000;
+    const STANDARD_STOCKING_DENSITY_PER_SQM = 50;
+    const PRICE_PER_PIECE = 0.70;
+
+    // Message box functions
+    function showMessageBox(message, type = 'info') {
+      const messageBox = document.getElementById('messageBox');
+      const messageText = document.getElementById('messageText');
+      messageText.textContent = message;
+      messageBox.className = "fixed top-5 right-5 z-50 transform translate-x-0 transition-transform duration-500 ease-in-out";
+
+      setTimeout(() => {
+        hideMessageBox();
+      }, 5000);
+    }
+
+    function hideMessageBox() {
+      const messageBox = document.getElementById('messageBox');
+      messageBox.className = "fixed top-5 right-5 z-50 transform translate-x-full transition-transform duration-500 ease-in-out";
+    }
+
+    function calculatePremiums() {
+      const pondAreaSqMetersInput = document.getElementById("pondAreaSqMeters");
+      const pondAreaHectaresInput = document.getElementById("pondAreaHectares");
+      const totalCoverageForSeedDisplay = document.getElementById("totalCoverageForSeedDisplay");
+      const calculatedPremium3PercentDisplay = document.getElementById("calculatedPremium3PercentDisplay");
+      const calculatedPremium2PercentDisplay = document.getElementById("calculatedPremium2PercentDisplay");
+      const calculatedPremium1PercentDisplay = document.getElementById("calculatedPremium1PercentDisplay");
+      const totalCoverageForSeedHidden = document.getElementById("totalCoverageForSeed");
+      const calculatedPremium3PercentHidden = document.getElementById("calculatedPremium3Percent");
+      const calculatedPremium2PercentHidden = document.getElementById("calculatedPremium2Percent");
+      const calculatedPremium1PercentHidden = document.getElementById("calculatedPremium1Percent");
+
+      const pondAreaSqMetersValue = pondAreaSqMetersInput.value;
+      const pondAreaSqMeters = parseFloat(pondAreaSqMetersValue);
+
+      let pondAreaHectares = 0;
+      let totalCoverage = 0;
+
+      if (!isNaN(pondAreaSqMeters) && pondAreaSqMeters > 0) {
+        pondAreaHectares = pondAreaSqMeters / SQUARE_METERS_PER_HECTARE;
+        totalCoverage = pondAreaSqMeters * STANDARD_STOCKING_DENSITY_PER_SQM * PRICE_PER_PIECE;
+      }
+      
+      const premium3Percent = (totalCoverage * 0.03).toFixed(2);
+      const premium2Percent = (totalCoverage * 0.02).toFixed(2);
+      const premium1Percent = (totalCoverage * 0.01).toFixed(2);
+
+      pondAreaHectaresInput.value = pondAreaHectares.toFixed(4);
+      totalCoverageForSeedDisplay.textContent = `₹ ${totalCoverage.toFixed(2)}`;
+      totalCoverageForSeedHidden.value = totalCoverage.toFixed(2);
+
+      calculatedPremium3PercentDisplay.textContent = `₹ ${premium3Percent}`;
+      calculatedPremium3PercentHidden.value = premium3Percent;
+
+      calculatedPremium2PercentDisplay.textContent = `₹ ${premium2Percent}`;
+      calculatedPremium2PercentHidden.value = premium2Percent;
+
+      calculatedPremium1PercentDisplay.textContent = `₹ ${premium1Percent}`;
+      calculatedPremium1PercentHidden.value = premium1Percent;
+    }
+
+    function togglePremiumSections() {
+      const premium3PercentNo = document.querySelector('input[name="agreedToPremium3Percent"][value="No"]');
+      const premium2PercentSection = document.getElementById('premium2PercentSection');
+      const premium2PercentNo = document.querySelector('input[name="agreedToPremium2Percent"][value="No"]');
+      const premium1PercentSection = document.getElementById('premium1PercentSection');
+
+      // The 2% section should only be visible if the 3% section's "No" is checked.
+      if (premium3PercentNo && premium3PercentNo.checked) {
+        premium2PercentSection.classList.remove('hidden');
+        document.querySelectorAll('#premium2PercentSection input').forEach(radio => radio.disabled = false);
+      } else {
+        premium2PercentSection.classList.add('hidden');
+        document.querySelectorAll('#premium2PercentSection input').forEach(radio => radio.disabled = true);
+        // Reset selections and hide the 1% section if 2% section is hidden
+        if (document.querySelector('input[name="agreedToPremium2Percent"]:checked')) {
+          document.querySelector('input[name="agreedToPremium2Percent"]:checked').checked = false;
         }
+        premium1PercentSection.classList.add('hidden');
+        document.querySelectorAll('#premium1PercentSection input').forEach(radio => radio.disabled = true);
+      }
 
-        // UPDATED: Function to handle form submission with improved data collection and error handling
-        document.getElementById('surveyForm').addEventListener('submit', async function(event) {
-          event.preventDefault();
+      // The 1% section should only be visible if the 2% section's "No" is checked.
+      if (premium2PercentNo && premium2PercentNo.checked) {
+        premium1PercentSection.classList.remove('hidden');
+        document.querySelectorAll('#premium1PercentSection input').forEach(radio => radio.disabled = false);
+      } else {
+        premium1PercentSection.classList.add('hidden');
+        document.querySelectorAll('#premium1PercentSection input').forEach(radio => radio.disabled = true);
+        if (document.querySelector('input[name="agreedToPremium1Percent"]:checked')) {
+          document.querySelector('input[name="agreedToPremium1Percent"]:checked').checked = false;
+        }
+      }
+    }
 
-          if (!document.getElementById('verifyOtpButton').disabled || !document.getElementById('otpInput').disabled) {
-              showMessageBox('Please verify your mobile number with OTP before submitting.', 'error');
-              return;
-          }
+    // Function to handle the send OTP button click (Firebase)
+    async function sendOTP() {
+      const phoneNumberInput = document.getElementById("phoneNumber");
+      const phoneNumber = phoneNumberInput.value;
+      const sendOtpButton = document.getElementById("sendOtpButton");
 
-          const form = event.target;
-          const submitButton = document.getElementById('submitButton');
-          submitButton.disabled = true;
-          submitButton.textContent = 'Submitting...';
+      if (!phoneNumber) {
+        showMessageBox("Please enter a valid phone number.", "error");
+        return;
+      }
+      sendOtpButton.disabled = true;
+      sendOtpButton.textContent = "Sending...";
 
-          const formData = new FormData(form);
-          const payload = {};
-          for (const [key, value] of formData.entries()) {
-              payload[key] = value;
-          }
-          
-          // MODIFIED: Ensure hidden and radio button values are correctly captured.
-          payload['pondAreaHectares'] = document.getElementById('pondAreaHectares').value;
-          payload['totalCoverageForSeed'] = document.getElementById('totalCoverageForSeed').value;
-          payload['calculatedPremium3Percent'] = document.getElementById('calculatedPremium3Percent').value;
-          payload['calculatedPremium2Percent'] = document.getElementById('calculatedPremium2Percent').value;
-          payload['calculatedPremium1Percent'] = document.getElementById('calculatedPremium1Percent').value;
-          
-          const agreedToPremium3Percent = document.querySelector('input[name="agreedToPremium3Percent"]:checked');
-          if (agreedToPremium3Percent) {
-            payload['agreedToPremium3Percent'] = agreedToPremium3Percent.value;
-          }
-          const agreedToPremium2Percent = document.querySelector('input[name="agreedToPremium2Percent"]:checked');
-          if (agreedToPremium2Percent) {
-            payload['agreedToPremium2Percent'] = agreedToPremium2Percent.value; 
-          }
-          const agreedToPremium1Percent = document.querySelector('input[name="agreedToPremium1Percent"]:checked');
-          if (agreedToPremium1Percent) { 
-            payload['agreedToPremium1Percent'] = agreedToPremium1Percent.value;
-          }
-          const whiteSpotDisease = document.querySelector('input[name="whiteSpotDisease"]:checked');
-          if (whiteSpotDisease) {
-            payload['whiteSpotDisease'] = whiteSpotDisease.value;
-          }
-          
-          // ADDED: Logic to ensure at least one premium option is chosen if applicable
-          if (agreedToPremium3Percent && agreedToPremium3Percent.value === 'Yes') {
-              // The form can be submitted as a premium option is selected
-          } else if (agreedToPremium2Percent && agreedToPremium2Percent.value === 'Yes') {
-              // The form can be submitted
-          } else if (agreedToPremium1Percent && agreedToPremium1Percent.value === 'Yes') {
-              // The form can be submitted
-          } else if (agreedToPremium3Percent && agreedToPremium3Percent.value === 'No' &&
-              agreedToPremium2Percent && agreedToPremium2Percent.value === 'No' &&
-              agreedToPremium1Percent && agreedToPremium1Percent.value === 'No') {
-              showMessageBox('You must agree to at least one premium option to submit the form.', 'error');
-              submitButton.disabled = false;
-              submitButton.textContent = 'Submit';
-              return;
-          } else if (!agreedToPremium3Percent) {
-              showMessageBox('Please select an option for the 3% premium.', 'error');
-              submitButton.disabled = false;
-              submitButton.textContent = 'Submit';
-              return;
-          } else if (agreedToPremium3Percent.value === 'No' && !agreedToPremium2Percent) {
-              showMessageBox('Please select an option for the 2% premium.', 'error');
-              submitButton.disabled = false;
-              submitButton.textContent = 'Submit';
-              return;
-          } else if (agreedToPremium2Percent.value === 'No' && !agreedToPremium1Percent) {
-              showMessageBox('Please select an option for the 1% premium.', 'error');
-              submitButton.disabled = false;
-              submitButton.textContent = 'Submit';
-              return;
-          }
+      try {
+        const appVerifier = window.recaptchaVerifier;
+        confirmationResult = await auth.signInWithPhoneNumber(phoneNumber, appVerifier);
+        showMessageBox("OTP sent successfully!", "success");
+        document.getElementById('otpInput').disabled = false;
+        document.getElementById('verifyOtpButton').disabled = false;
+        phoneNumberInput.disabled = true;
+        sendOtpButton.disabled = true; // Keep send button disabled after OTP is sent
+      } catch (error) {
+        console.error('Error sending OTP:', error);
+        showMessageBox(`Error sending OTP: ${error.message}`, "error");
+        sendOtpButton.disabled = false;
+        sendOtpButton.textContent = "Send OTP";
+      }
+    }
 
-          try {
-              const response = await fetch(formSubmitAppsScriptUrl, {
-                  method: 'POST',
-                  body: JSON.stringify(payload),
-                  headers: {
-                      'Content-Type': 'application/json'
-                  }
-              });
+    // Function to handle the verify OTP button click (Firebase)
+    async function verifyOTP() {
+      const otp = document.getElementById("otpInput").value;
+      const verifyOtpButton = document.getElementById("verifyOtpButton");
 
-              if (response.ok) {
-                  const result = await response.text();
-                  console.log('Success:', result);
-                  showMessageBox('Survey data submitted successfully!', 'success');
-                  form.reset();
-                  document.getElementById('phoneNumber').disabled = false;
-                  document.getElementById('sendOtpButton').disabled = false;
-                  document.getElementById('otpInput').disabled = true;
-                  document.getElementById('verifyOtpButton').disabled = true;
-                  document.getElementById('submitButton').disabled = true;
-                  document.getElementById('otpInput').value = '';
-                  
-                  document.getElementById('surveyForm').querySelectorAll('input, button, select').forEach(element => {
-                    if (element.id !== 'phoneNumber' && element.id !== 'sendOtpButton' && element.id !== 'otpInput' && element.id !== 'verifyOtpButton') {
-                        element.disabled = true;
-                    }
-                  });
-                  calculatePremiums();
-                  togglePremiumSections();
-                  // Reset reCAPTCHA after successful submission
-                  if (appVerifier && appVerifier.reset) {
-                    appVerifier.reset();
-                  }
-              } else {
-                  throw new Error('Network response was not ok.');
-              }
-          } catch (error) {
-              console.error('Error:', error);
-              // MODIFIED: Show a more specific error message for CORS
-              showMessageBox('Submission failed. Please ensure your Google Apps Script is configured for CORS.', 'error');
-          } finally {
-              submitButton.disabled = false;
-              submitButton.textContent = 'Submit';
-          }
+      if (!otp) {
+        showMessageBox("Please enter the OTP.", "error");
+        return;
+      }
+
+      verifyOtpButton.disabled = true;
+      verifyOtpButton.textContent = "Verifying...";
+
+      try {
+        await confirmationResult.confirm(otp);
+        showMessageBox("OTP verified successfully!", "success");
+        enableFormFields();
+        document.getElementById('otpInput').disabled = true;
+        document.getElementById('verifyOtpButton').disabled = true;
+      } catch (error) {
+        console.error('Error verifying OTP:', error);
+        showMessageBox(`Invalid OTP: ${error.message}`, "error");
+        verifyOtpButton.disabled = false;
+        verifyOtpButton.textContent = "Verify OTP";
+      }
+    }
+
+    function enableFormFields() {
+      document.getElementById('submitButton').disabled = false;
+      document.querySelectorAll('#surveyForm input, #surveyForm select').forEach(element => {
+        element.disabled = false;
+      });
+      // Also enable the premium radio buttons that are not inside a hidden section
+      document.querySelectorAll('input[name="agreedToPremium3Percent"]').forEach(radio => radio.disabled = false);
+    }
+
+    function fillLocation(inputElementId) {
+      const locationInput = document.getElementById(inputElementId);
+      locationInput.value = "Fetching location...";
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(position => {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          locationInput.value = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+          showMessageBox("Location filled successfully.", "success");
+        }, () => {
+          locationInput.value = "Unable to retrieve location";
+          showMessageBox("Error: Unable to retrieve your location.", "error");
         });
+      } else {
+        locationInput.value = "Geolocation not supported";
+        showMessageBox("Error: Geolocation is not supported by your browser.", "error");
+      }
+    }
 
-        // Event listeners
-        document.addEventListener('DOMContentLoaded', () => {
-          calculatePremiums();
-          togglePremiumSections();
+    async function handleFormSubmission(event) {
+      event.preventDefault();
+      const submitButton = document.getElementById('submitButton');
+      submitButton.disabled = true;
+      submitButton.textContent = 'Submitting...';
 
-          document.getElementById('submitButton').disabled = true;
-          document.getElementById('otpInput').disabled = true;
-          document.getElementById('verifyOtpButton').disabled = true;
+      const form = event.target;
+      const formData = new FormData(form);
+      const data = { action: "submit-form" };
 
-          document.getElementById('sendOtpButton').addEventListener('click', sendOTP);
-          document.getElementById('verifyOtpButton').addEventListener('click', verifyOTP);
-          document.getElementById('useLocationButton').addEventListener('click', () => fillLocation('pondLocation'));
-          document.getElementById('pondAreaSqMeters').addEventListener('input', () => {
-            calculatePremiums();
-            togglePremiumSections();
-          });
+      for (let [key, value] of formData.entries()) {
+        data[key] = value;
+      }
+      
+      // Manually add the checked radio button values
+      document.querySelectorAll('input[type="radio"]:checked').forEach(radio => {
+          data[radio.name] = radio.value;
+      });
 
-          // MODIFIED: Added event listeners to all radio buttons to ensure togglePremiumSections runs correctly
-          document.querySelectorAll('input[name="agreedToPremium3Percent"]').forEach(radio => {
-              radio.addEventListener('change', togglePremiumSections);
-          });
-          document.querySelectorAll('input[name="agreedToPremium2Percent"]').forEach(radio => {
-              radio.addEventListener('change', togglePremiumSections);
-          });
-          document.querySelectorAll('input[name="agreedToPremium1Percent"]').forEach(radio => {
-              radio.addEventListener('change', togglePremiumSections);
-          });
+      console.log('Submitting data:', data);
+
+      try {
+        const response = await fetch(formSubmitAppsScriptUrl, {
+          method: 'POST',
+          mode: 'cors',
+          headers: {
+            'Content-Type': 'text/plain;charset=utf-8',
+          },
+          body: JSON.stringify(data)
         });
-      </script>
-    </body>
-    </html>
+        const result = await response.json();
+        
+        if (result.success) {
+          showMessageBox("Form submitted successfully!", "success");
+          form.reset();
+        } else {
+          showMessageBox(`Submission failed: ${result.message}`, "error");
+        }
+      } catch (error) {
+        showMessageBox("An error occurred during form submission.", "error");
+        console.error('Submission Error:', error);
+      } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = 'Submit';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Initialize Firebase Recaptcha Verifier
+      window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+        'size': 'normal',
+        'callback': (response) => {
+          // reCAPTCHA solved, allow user to send OTP
+          document.getElementById('sendOtpButton').disabled = false;
+        },
+        'expired-callback': () => {
+          // reCAPTCHA expired. Reset recaptcha.
+          document.getElementById('sendOtpButton').disabled = true;
+        }
+      });
+      window.recaptchaVerifier.render();
+
+      calculatePremiums();
+      togglePremiumSections();
+      
+      document.getElementById('submitButton').disabled = true;
+      document.getElementById('otpInput').disabled = true;
+      document.getElementById('verifyOtpButton').disabled = true;
+      document.querySelectorAll('#surveyForm input, #surveyForm select').forEach(element => {
+          element.disabled = true;
+      });
+
+      document.getElementById('sendOtpButton').addEventListener('click', sendOTP);
+      document.getElementById('verifyOtpButton').addEventListener('click', verifyOTP);
+      document.getElementById('useLocationButton').addEventListener('click', () => fillLocation('pondLocation'));
+      document.getElementById('pondAreaSqMeters').addEventListener('input', () => {
+        calculatePremiums();
+        togglePremiumSections();
+      });
+
+      // Add event listeners to all premium radio buttons
+      document.querySelectorAll('input[type="radio"][name^="agreedToPremium"]').forEach(radio => {
+          radio.addEventListener('change', togglePremiumSections);
+      });
+      
+      document.getElementById('surveyForm').addEventListener('submit', handleFormSubmission);
+    });
+  </script>
+</body>
+</html>
