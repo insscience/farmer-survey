@@ -332,7 +332,7 @@
         premium1PercentSection.classList.add('hidden');
         document.querySelectorAll('#premium1PercentSection input').forEach(radio => radio.disabled = true);
         if (document.querySelector('input[name="agreedToPremium1Percent"]:checked')) {
-          document.querySelector('input[name="agreedToPremium1Percent']:checked').checked = false;
+          document.querySelector('input[name="agreedToPremium1Percent"]:checked').checked = false;
         }
       }
     }
@@ -426,24 +426,30 @@
       }
     }
 
+    // UPDATED FORM SUBMISSION LOGIC
     async function handleFormSubmission(event) {
       event.preventDefault();
       const submitButton = document.getElementById('submitButton');
       submitButton.disabled = true;
       submitButton.textContent = 'Submitting...';
 
-      const form = event.target;
-      const formData = new FormData(form);
+      const form = document.getElementById('surveyForm');
       const data = { action: "submit-form" };
 
-      for (let [key, value] of formData.entries()) {
-        data[key] = value;
+      // Get values from all form elements
+      for (const element of form.elements) {
+        if (element.name) {
+          // Handle all input types, selects, etc.
+          if (element.type === 'radio') {
+            // For radio buttons, only include the checked one
+            if (element.checked) {
+              data[element.name] = element.value;
+            }
+          } else {
+            data[element.name] = element.value;
+          }
+        }
       }
-      
-      // Manually add the checked radio button values
-      document.querySelectorAll('input[type="radio"]:checked').forEach(radio => {
-          data[radio.name] = radio.value;
-      });
 
       console.log('Submitting data:', data);
 
